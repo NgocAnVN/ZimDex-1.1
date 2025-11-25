@@ -128,12 +128,24 @@ export const MusicApp: React.FC<MusicAppProps> = ({
          </div>
 
          {/* Playlist Items */}
-         <div className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-1">
+         <motion.div 
+            className="flex-1 overflow-y-auto custom-scrollbar -mx-2 px-2 space-y-1"
+            initial="hidden"
+            animate="show"
+            variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.04 } }
+            }}
+         >
             {playlist.map((song, index) => {
               const isActive = song.title === currentSong.title;
               return (
-                <div 
+                <motion.div 
                   key={index}
+                  variants={{
+                    hidden: { opacity: 0, x: 20 },
+                    show: { opacity: 1, x: 0 }
+                  }}
                   ref={isActive ? activeSongRef : null}
                   onClick={() => onPlay(index)}
                   className={`
@@ -162,10 +174,10 @@ export const MusicApp: React.FC<MusicAppProps> = ({
                       <div className="text-white/50 text-xs truncate">{song.artist}</div>
                    </div>
                    {isActive && <Volume2 size={14} className="text-blue-400" />}
-                </div>
+                </motion.div>
               );
             })}
-         </div>
+         </motion.div>
 
          {/* Controls Area */}
          <div className="mt-6 pt-6 border-t border-white/10">

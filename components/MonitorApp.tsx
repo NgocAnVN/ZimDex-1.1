@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Activity, Cpu, HardDrive, Wifi, Layers, Server, Zap, Search, ArrowUp, ArrowDown, Microchip } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // --- Helper Hook for Simulated Data ---
 const useSimulatedData = (initialValue: number, volatility: number = 10, min: number = 0, max: number = 100) => {
@@ -35,12 +36,12 @@ const LineGraph: React.FC<{ data: number[]; color: string; height?: number }> = 
   }).join(' ');
 
   return (
-    <div className="w-full overflow-hidden rounded bg-black/20 relative" style={{ height }}>
+    <div className="w-full overflow-hidden rounded bg-black/5 dark:bg-black/20 relative" style={{ height }}>
        {/* Grid lines */}
        <div className="absolute inset-0 flex flex-col justify-between opacity-20 pointer-events-none p-2">
-          <div className="border-t border-dashed border-white/50 w-full h-px" />
-          <div className="border-t border-dashed border-white/50 w-full h-px" />
-          <div className="border-t border-dashed border-white/50 w-full h-px" />
+          <div className="border-t border-dashed border-gray-400 dark:border-white/50 w-full h-px" />
+          <div className="border-t border-dashed border-gray-400 dark:border-white/50 w-full h-px" />
+          <div className="border-t border-dashed border-gray-400 dark:border-white/50 w-full h-px" />
        </div>
        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full opacity-80">
           <defs>
@@ -91,34 +92,39 @@ export const MonitorApp: React.FC = () => {
   const TabButton = ({ id, label, icon: Icon }: any) => (
     <button 
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-        activeTab === id 
-          ? 'bg-blue-600/20 text-blue-400' 
-          : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-      }`}
+      className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group`}
     >
-      <Icon size={18} />
-      {label}
+      {activeTab === id && (
+        <motion.div 
+          layoutId="monitor-active-tab"
+          className="absolute inset-0 bg-blue-100 dark:bg-blue-600/20 rounded-lg"
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      )}
+      <div className={`relative z-10 flex items-center gap-3 ${activeTab === id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400 group-hover:text-black dark:group-hover:text-gray-200'}`}>
+        <Icon size={18} />
+        {label}
+      </div>
     </button>
   );
 
   return (
-    <div className="w-full h-full flex bg-[#111]/90 backdrop-blur-xl text-gray-100 font-sans overflow-hidden">
+    <div className="w-full h-full flex bg-white/90 dark:bg-[#111]/90 backdrop-blur-xl text-gray-900 dark:text-gray-100 font-sans overflow-hidden transition-colors duration-300">
       {/* Sidebar */}
-      <div className="w-56 border-r border-white/5 bg-black/20 flex flex-col p-4 gap-1">
+      <div className="w-56 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 flex flex-col p-4 gap-1 transition-colors">
         <div className="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 mb-2">System Monitor</div>
         <TabButton id="overview" label="Overview" icon={Activity} />
         <TabButton id="processes" label="Processes" icon={Layers} />
         
-        <div className="h-[1px] bg-white/5 my-2 mx-3" />
+        <div className="h-[1px] bg-black/5 dark:bg-white/5 my-2 mx-3" />
         
         <div className="mt-auto">
-            <div className="bg-[#1a1a1a] rounded-lg p-3 border border-white/5">
-                <div className="flex items-center gap-2 text-xs text-gray-400 mb-2">
+            <div className="bg-white dark:bg-[#1a1a1a] rounded-lg p-3 border border-black/5 dark:border-white/5 shadow-sm">
+                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2">
                     <Server size={14} />
                     <span>Uptime</span>
                 </div>
-                <div className="text-lg font-mono font-medium text-white">
+                <div className="text-lg font-mono font-medium text-gray-900 dark:text-white">
                     3:12:45
                 </div>
             </div>
@@ -126,122 +132,136 @@ export const MonitorApp: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <AnimatePresence mode="wait">
         {/* Content View */}
         {activeTab === 'overview' && (
-          <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+          <motion.div 
+            key="overview"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6"
+          >
              {/* CPU Section */}
-             <div className="bg-[#1a1a1a]/80 border border-white/5 rounded-xl p-5">
+             <div className="bg-white/50 dark:bg-[#1a1a1a]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-500 dark:text-blue-400">
                          <Cpu size={20} />
                       </div>
                       <div>
-                         <h3 className="font-bold text-white">CPU</h3>
-                         <div className="text-xs text-gray-400">Intel Core i9-14900K @ 6.0GHz</div>
+                         <h3 className="font-bold text-gray-900 dark:text-white">CPU</h3>
+                         <div className="text-xs text-gray-500 dark:text-gray-400">Intel Core i9-14900K @ 6.0GHz</div>
                       </div>
                    </div>
                    <div className="text-right">
-                      <div className="text-2xl font-mono font-bold text-blue-400">{cpu.value.toFixed(1)}%</div>
+                      <div className="text-2xl font-mono font-bold text-blue-600 dark:text-blue-400">{cpu.value.toFixed(1)}%</div>
                       <div className="text-xs text-gray-500">Utilization</div>
                    </div>
                 </div>
-                <LineGraph data={cpu.history} color="#60a5fa" height={120} />
-                <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-white/5">
+                <LineGraph data={cpu.history} color="#3b82f6" height={120} />
+                <div className="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-black/5 dark:border-white/5">
                     <div>
                         <div className="text-xs text-gray-500">Processes</div>
-                        <div className="text-sm text-white font-medium">248</div>
+                        <div className="text-sm text-gray-900 dark:text-white font-medium">248</div>
                     </div>
                     <div>
                         <div className="text-xs text-gray-500">Threads</div>
-                        <div className="text-sm text-white font-medium">3214</div>
+                        <div className="text-sm text-gray-900 dark:text-white font-medium">3214</div>
                     </div>
                     <div>
                         <div className="text-xs text-gray-500">Handles</div>
-                        <div className="text-sm text-white font-medium">115,420</div>
+                        <div className="text-sm text-gray-900 dark:text-white font-medium">115,420</div>
                     </div>
                     <div>
                         <div className="text-xs text-gray-500">Up Time</div>
-                        <div className="text-sm text-white font-medium">0:03:12:45</div>
+                        <div className="text-sm text-gray-900 dark:text-white font-medium">0:03:12:45</div>
                     </div>
                 </div>
              </div>
 
              {/* Memory Section */}
-             <div className="bg-[#1a1a1a]/80 border border-white/5 rounded-xl p-5">
+             <div className="bg-white/50 dark:bg-[#1a1a1a]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-500 dark:text-purple-400">
                          <Microchip size={20} />
                       </div>
                       <div>
-                         <h3 className="font-bold text-white">Memory</h3>
-                         <div className="text-xs text-gray-400">64 GB DDR5</div>
+                         <h3 className="font-bold text-gray-900 dark:text-white">Memory</h3>
+                         <div className="text-xs text-gray-500 dark:text-gray-400">64 GB DDR5</div>
                       </div>
                    </div>
                    <div className="text-right">
-                      <div className="text-2xl font-mono font-bold text-purple-400">{mem.value.toFixed(1)}%</div>
+                      <div className="text-2xl font-mono font-bold text-purple-600 dark:text-purple-400">{mem.value.toFixed(1)}%</div>
                       <div className="text-xs text-gray-500">{(mem.value * 0.64).toFixed(1)} GB Used</div>
                    </div>
                 </div>
                 <LineGraph data={mem.history} color="#a855f7" height={80} />
                 
                 <div className="mt-4 space-y-2">
-                   <div className="flex justify-between text-xs text-gray-400">
+                   <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                        <span>In Use (Compressed)</span>
                        <span>Available</span>
                    </div>
-                   <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden flex">
+                   <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden flex">
                        <div className="h-full bg-purple-500" style={{ width: `${mem.value}%` }} />
-                       <div className="h-full bg-gray-700" style={{ width: `${100 - mem.value}%` }} />
+                       <div className="h-full bg-gray-300 dark:bg-gray-700" style={{ width: `${100 - mem.value}%` }} />
                    </div>
                 </div>
              </div>
 
              <div className="grid grid-cols-2 gap-6">
                 {/* Disk Section */}
-                <div className="bg-[#1a1a1a]/80 border border-white/5 rounded-xl p-5">
+                <div className="bg-white/50 dark:bg-[#1a1a1a]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center text-green-400">
+                        <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-500 dark:text-green-400">
                             <HardDrive size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-white">Disk (C:)</h3>
-                            <div className="text-xs text-gray-400">NVMe SSD</div>
+                            <h3 className="font-bold text-gray-900 dark:text-white">Disk (C:)</h3>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">NVMe SSD</div>
                         </div>
                          <div className="ml-auto text-right">
-                            <div className="text-xl font-mono font-bold text-green-400">{disk.value.toFixed(1)}%</div>
+                            <div className="text-xl font-mono font-bold text-green-600 dark:text-green-400">{disk.value.toFixed(1)}%</div>
                          </div>
                     </div>
                     <LineGraph data={disk.history} color="#10b981" height={60} />
                 </div>
 
                 {/* Network Section */}
-                <div className="bg-[#1a1a1a]/80 border border-white/5 rounded-xl p-5">
+                <div className="bg-white/50 dark:bg-[#1a1a1a]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 shadow-sm">
                     <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center text-yellow-400">
+                        <div className="w-10 h-10 rounded-lg bg-yellow-100 dark:bg-yellow-500/20 flex items-center justify-center text-yellow-500 dark:text-yellow-400">
                             <Wifi size={20} />
                         </div>
                         <div>
-                            <h3 className="font-bold text-white">Wi-Fi</h3>
-                            <div className="text-xs text-gray-400">ZimDex-5G</div>
+                            <h3 className="font-bold text-gray-900 dark:text-white">Wi-Fi</h3>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">ZimDex-5G</div>
                         </div>
                          <div className="ml-auto text-right">
-                            <div className="text-xl font-mono font-bold text-yellow-400">{net.value.toFixed(1)} Kbps</div>
+                            <div className="text-xl font-mono font-bold text-yellow-600 dark:text-yellow-400">{net.value.toFixed(1)} Kbps</div>
                          </div>
                     </div>
                     <LineGraph data={net.history} color="#f59e0b" height={60} />
                 </div>
              </div>
-          </div>
+          </motion.div>
         )}
 
         {activeTab === 'processes' && (
-          <div className="flex-1 flex flex-col">
+          <motion.div 
+             key="processes"
+             initial={{ opacity: 0, x: 20 }}
+             animate={{ opacity: 1, x: 0 }}
+             exit={{ opacity: 0, x: -20 }}
+             transition={{ type: "spring", stiffness: 300, damping: 30 }}
+             className="flex-1 flex flex-col"
+          >
              {/* Header for table */}
-             <div className="flex items-center px-6 py-3 border-b border-white/5 text-xs text-gray-400 font-medium uppercase tracking-wider bg-[#151515]">
+             <div className="flex items-center px-6 py-3 border-b border-black/5 dark:border-white/5 text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wider bg-gray-50 dark:bg-[#151515] transition-colors">
                  <div className="flex-1">Name</div>
                  <div className="w-24">User</div>
                  <div className="w-20 text-right">CPU</div>
@@ -250,25 +270,44 @@ export const MonitorApp: React.FC = () => {
                  <div className="w-20 text-right">Network</div>
              </div>
              {/* List */}
-             <div className="flex-1 overflow-y-auto custom-scrollbar">
+             <motion.div 
+                className="flex-1 overflow-y-auto custom-scrollbar"
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.03 }
+                  }
+                }}
+             >
                  {processes.map((p, i) => (
-                     <div key={i} className="flex items-center px-6 py-3 border-b border-white/5 hover:bg-white/5 transition-colors text-sm">
+                     <motion.div 
+                        key={i} 
+                        className="flex items-center px-6 py-3 border-b border-black/5 dark:border-white/5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-sm"
+                        variants={{
+                          hidden: { opacity: 0, x: -10 },
+                          visible: { opacity: 1, x: 0 }
+                        }}
+                     >
                          <div className="flex-1 flex items-center gap-3">
-                             <div className="w-8 h-8 rounded bg-white/5 flex items-center justify-center text-gray-400">
+                             <div className="w-8 h-8 rounded bg-black/5 dark:bg-white/5 flex items-center justify-center text-gray-500 dark:text-gray-400">
                                  <p.icon size={16} />
                              </div>
-                             <span className="text-white font-medium">{p.name}</span>
+                             <span className="text-gray-900 dark:text-white font-medium">{p.name}</span>
                          </div>
-                         <div className="w-24 text-gray-400">{p.user}</div>
-                         <div className="w-20 text-right text-white">{p.cpu.toFixed(1)}%</div>
-                         <div className="w-20 text-right text-gray-300">{Math.round(p.mem)} MB</div>
-                         <div className="w-20 text-right text-gray-400">{p.disk.toFixed(1)} MB/s</div>
-                         <div className="w-20 text-right text-gray-400">{p.net.toFixed(1)} Mbps</div>
-                     </div>
+                         <div className="w-24 text-gray-600 dark:text-gray-400">{p.user}</div>
+                         <div className="w-20 text-right text-gray-900 dark:text-white">{p.cpu.toFixed(1)}%</div>
+                         <div className="w-20 text-right text-gray-700 dark:text-gray-300">{Math.round(p.mem)} MB</div>
+                         <div className="w-20 text-right text-gray-500 dark:text-gray-400">{p.disk.toFixed(1)} MB/s</div>
+                         <div className="w-20 text-right text-gray-500 dark:text-gray-400">{p.net.toFixed(1)} Mbps</div>
+                     </motion.div>
                  ))}
-             </div>
-          </div>
+             </motion.div>
+          </motion.div>
         )}
+        </AnimatePresence>
       </div>
     </div>
   );

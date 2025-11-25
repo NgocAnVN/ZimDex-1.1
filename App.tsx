@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { OSWindow } from './components/OSWindow';
 import { SettingsApp } from './components/SettingsApp';
 import { CustomCursor } from './components/CustomCursor';
@@ -16,13 +16,27 @@ import { SnakeGameApp } from './components/SnakeGameApp';
 import { FileExplorerApp } from './components/FileExplorerApp';
 import { MonitorApp } from './components/MonitorApp';
 import { MailApp } from './components/MailApp';
+import { PhoAnhHaiApp } from './components/PhoAnhHaiApp';
+import { TaskManager } from './components/TaskManager';
+import { UninstallApp } from './components/UninstallApp';
+import { CalculatorApp } from './components/CalculatorApp';
+import { NoteApp } from './components/NoteApp';
+import { DesktopWidgets } from './components/DesktopWidgets'; 
+import { WidgetPicker } from './components/WidgetPicker';
+import { TextEditor, ImageViewer, MediaPlayer } from './components/FileViewers';
+import { LockScreen } from './components/LockScreen';
+import { Windows10Env } from './components/Windows10Env';
+import { SystemProvider, useSystem } from './contexts/SystemContext';
 import { 
-  Settings, Wifi, Volume2, Battery, MessageSquare, Play, SkipBack, 
-  SkipForward, Search, Power, Monitor, Calendar, Image as ImageIcon, 
-  RefreshCw, Disc, Folder, Skull, ArrowLeft, Wrench, Terminal, 
-  RotateCcw, Cpu, HardDrive, Pause
+  Settings, Wifi, Volume2, Battery, Power, Monitor, Image as ImageIcon, 
+  RefreshCw, Disc, Folder, ArrowLeft, Wrench, Terminal, 
+  RotateCcw, Cpu, HardDrive, Pause, Play, SkipBack, SkipForward, Trash2, Lock,
+  Globe, Gamepad2, Utensils, Sparkles, Film, Music, Video, Mail, Calculator, StickyNote, Shield, Layout
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { FileSystemNode, WidgetInstance, WidgetType, WidgetStyle } from './types'; 
+
+// ... (Keep all the existing helper components like Clock, AmeOSLogo, AmeOSInstaller, AmeOSDesktop, LinuxCrashScreen, AmeOSBootScreen - NO CHANGES TO THEM) ...
 
 // Simple clock component
 const Clock = () => {
@@ -32,18 +46,208 @@ const Clock = () => {
     return () => clearInterval(timer);
   }, []);
   return (
-    <div className="text-white font-medium text-sm select-none tracking-wide drop-shadow-md font-['Inter']">
+    <div className="text-white font-medium text-sm select-none tracking-wide drop-shadow-md">
       {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
     </div>
   );
 };
 
+// AmeOS "S" Logo Component
+const AmeOSLogo = () => (
+  <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 20H80V40H40L30 50L40 60H80V80H20V60H60L70 50L60 40H20V20Z" fill="white"/>
+  </svg>
+);
+
+// AmeOS Installer Component
+const AmeOSInstaller = ({ onComplete }: { onComplete: () => void }) => {
+    const [step, setStep] = useState(0);
+    const [progress, setProgress] = useState(0);
+    const [log, setLog] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (step === 0) {
+            // Logo Screen
+            setTimeout(() => setStep(1), 3000);
+        } else if (step === 1) {
+            // Installation Progress
+            const interval = setInterval(() => {
+                setProgress(prev => {
+                    if (prev >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => setStep(2), 1000);
+                        return 100;
+                    }
+                    // Random increments
+                    return Math.min(prev + Math.random() * 5, 100);
+                });
+                
+                if (Math.random() > 0.7) {
+                    const logs = [
+                        "Extracting system files...",
+                        "Configuring kernel modules...",
+                        "Optimizing visual subsystem...",
+                        "Mounting /dev/sda1...",
+                        "Bypassing security policies...",
+                        "Installing backdoor services...",
+                        "Writing bootloader...",
+                    ];
+                    setLog(prev => [...prev, logs[Math.floor(Math.random() * logs.length)]].slice(-5));
+                }
+            }, 200);
+            return () => clearInterval(interval);
+        } else if (step === 2) {
+            // Complete
+            setTimeout(onComplete, 2000);
+        }
+    }, [step, onComplete]);
+
+    return (
+        <div className="fixed inset-0 bg-black z-[6000] flex flex-col items-center justify-center font-mono text-white">
+            {step === 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.8 }} 
+                    animate={{ opacity: 1, scale: 1 }} 
+                    exit={{ opacity: 0 }}
+                    className="flex flex-col items-center gap-8"
+                >
+                    <AmeOSLogo />
+                    <div className="text-2xl font-bold tracking-widest">AmeOS</div>
+                </motion.div>
+            )}
+
+            {step === 1 && (
+                <div className="w-full max-w-md space-y-6">
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="w-12 h-12">
+                            <AmeOSLogo />
+                        </div>
+                        <div className="text-xl font-bold">Installing AmeOS...</div>
+                    </div>
+                    
+                    <div className="w-full bg-gray-900 h-2 rounded-full overflow-hidden border border-gray-800">
+                        <div className="h-full bg-white transition-all duration-200" style={{ width: `${progress}%` }} />
+                    </div>
+                    <div className="flex justify-between text-xs text-gray-500">
+                        <span>{Math.round(progress)}%</span>
+                        <span>Target: System Partition</span>
+                    </div>
+
+                    <div className="h-32 bg-gray-900/50 border border-gray-800 rounded p-4 font-mono text-xs text-gray-400 overflow-hidden flex flex-col justify-end">
+                        {log.map((l, i) => (
+                            <div key={i}>{l}</div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {step === 2 && (
+                <div className="text-center space-y-4 animate-pulse">
+                    <div className="text-green-500 font-bold text-xl">Installation Complete</div>
+                    <div className="text-sm text-gray-400">Rebooting...</div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// AmeOS Desktop (Fake)
+const AmeOSDesktop = ({ onCrash }: { onCrash: () => void }) => {
+    return (
+        <div 
+            className="fixed inset-0 bg-[#111] z-[5500] cursor-none overflow-hidden" 
+            onClick={onCrash}
+            onContextMenu={(e) => { e.preventDefault(); onCrash(); }}
+        >
+            {/* Fake Top Bar */}
+            <div className="h-8 bg-[#222] border-b border-[#333] flex items-center justify-between px-4 text-xs text-gray-400 select-none">
+                <div className="flex gap-4">
+                    <span className="font-bold text-white">Applications</span>
+                    <span>Places</span>
+                    <span>System</span>
+                </div>
+                <div>root@ame-os:~</div>
+            </div>
+
+            {/* Fake Windows */}
+            <div className="absolute top-20 left-20 w-[600px] h-[400px] bg-[#1a1a1a] border border-[#333] rounded shadow-2xl overflow-hidden">
+                <div className="h-8 bg-[#252525] border-b border-[#333] flex items-center px-3 gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-yellow-500/50" />
+                    <div className="w-3 h-3 rounded-full bg-green-500/50" />
+                    <div className="ml-4 text-xs text-gray-400">Terminal - root</div>
+                </div>
+                <div className="p-4 font-mono text-sm text-green-500/80">
+                    <div>root@ame-os:~# neofetch</div>
+                    <div className="mt-2 text-white">
+                        <pre>{`
+       .---.
+      /     \\      OS: AmeOS x86_64
+      |  O  |      Kernel: 6.6.6-ame
+      \\     /      Uptime: 1 min
+       '---'       Shell: zsh 5.9
+      `}</pre>
+                    </div>
+                    <div className="mt-4 animate-pulse">root@ame-os:~# _</div>
+                </div>
+            </div>
+
+            {/* Dock */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 h-14 bg-[#222]/90 border border-[#333] rounded-xl flex items-center px-4 gap-4">
+                {[1,2,3,4,5].map(i => (
+                    <div key={i} className="w-8 h-8 bg-[#333] rounded hover:bg-[#444] transition-colors" />
+                ))}
+            </div>
+        </div>
+    );
+};
+
+// Linux Crash Screen
+const LinuxCrashScreen = () => {
+    return (
+        <div className="fixed inset-0 bg-black z-[7000] p-8 font-mono text-sm md:text-base text-white overflow-hidden select-none cursor-none">
+            <div className="space-y-1">
+                <p>[    0.000000] Linux version 6.6.6-ame (root@buildhost) (gcc version 12.2.0 (Debian 12.2.0-14)) #1 SMP PREEMPT_DYNAMIC Fri Feb 16 00:00:00 UTC 2025</p>
+                <p>[    0.283122] Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)</p>
+                <p>[    0.283190] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 6.6.6-ame #1</p>
+                <p>[    0.283244] Hardware name: AmeOS Virtual Machine, BIOS 1.0 01/01/2025</p>
+                <p>[    0.283298] Call Trace:</p>
+                <p>[    0.283345]  &lt;TASK&gt;</p>
+                <p>[    0.283392]  dump_stack_lvl+0x48/0x60</p>
+                <p>[    0.283441]  panic+0x118/0x2f0</p>
+                <p>[    0.283490]  mount_block_root+0x148/0x1f0</p>
+                <p>[    0.283542]  mount_root+0x38/0x40</p>
+                <p>[    0.283591]  prepare_namespace+0x13c/0x170</p>
+                <p>[    0.283643]  kernel_init_freeable+0x258/0x2a0</p>
+                <p>[    0.283698]  ? rest_init+0xc0/0xc0</p>
+                <p>[    0.283749]  kernel_init+0x18/0x120</p>
+                <p>[    0.283799]  ret_from_fork+0x22/0x30</p>
+                <p>[    0.283848]  &lt;/TASK&gt;</p>
+                <p>[    0.283952] Kernel Offset: disabled</p>
+                <p>[    0.284001] ---[ end Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0) ]---</p>
+            </div>
+            <div className="absolute bottom-8 left-8 animate-pulse bg-white text-black px-2">
+                SYSTEM HALTED
+            </div>
+        </div>
+    );
+};
+
 // AmeOS Boot Screen / Recovery Environment
-const AmeOSBootScreen = () => {
+const AmeOSBootScreen = ({ onRecover, onInstallHiddenOS }: { onRecover: () => void, onInstallHiddenOS: () => void }) => {
   const [bootPhase, setBootPhase] = useState(0); // 0: BIOS, 1: Loading, 2: Menu System, -1: Rebooting
-  const [menuScreen, setMenuScreen] = useState('restore_failed'); // 'restore_failed' | 'choose_option' | 'troubleshoot' | 'advanced_options' | 'loading' | 'error'
+  const [menuScreen, setMenuScreen] = useState('restore_failed'); // 'restore_failed' | 'choose_option' | 'troubleshoot' | 'advanced_options' | 'loading' | 'error' | 'command_prompt'
   const [loadingText, setLoadingText] = useState('Loading...');
   const [errorState, setErrorState] = useState({ title: '', message: '', backTo: '' });
+  
+  // Command Prompt State
+  const [terminalInput, setTerminalInput] = useState('');
+  const [terminalOutput, setTerminalOutput] = useState<string[]>(['ZimDex OS [Version 10.0.22621.1]', '(c) ZimDex Corporation. All rights reserved.', '']);
+  const terminalEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+      terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [terminalOutput]);
 
   // Boot sequence logic
   useEffect(() => {
@@ -61,7 +265,7 @@ const AmeOSBootScreen = () => {
         // Phase 1: Loading Logo (5s) -> transitions to Menu
         timer = setTimeout(() => setBootPhase(2), 5000);
     }
-    return () => clearTimeout(timer);
+    return () => clearInterval(timer);
   }, [bootPhase]);
 
   const handleRestart = () => {
@@ -82,6 +286,48 @@ const AmeOSBootScreen = () => {
               setMenuScreen(nextTarget);
           }
       }, 2500);
+  };
+
+  const handleTerminalSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const cmd = terminalInput.trim();
+      const newHistory = [...terminalOutput, `X:\\ZimDex\\System32>${cmd}`];
+      
+      if (cmd === 'Back-to-ZimDex==') {
+          newHistory.push('Restoring system configuration...');
+          newHistory.push('Rebooting...');
+          setTerminalOutput(newHistory);
+          setTerminalInput('');
+          setTimeout(onRecover, 2000);
+          return;
+      }
+
+      if (cmd === 'Install-AmeOS==') {
+          newHistory.push('Initiating AmeOS installation sequence...');
+          newHistory.push('Rebooting into installer...');
+          setTerminalOutput(newHistory);
+          setTerminalInput('');
+          setTimeout(onInstallHiddenOS, 2000);
+          return;
+      }
+
+      if (cmd === 'help') {
+          newHistory.push('Supported commands:');
+          newHistory.push('  exit               - Return to Advanced Options');
+          newHistory.push('  dir                - List directory contents');
+          newHistory.push('  Back-to-ZimDex==   - Restore normal operation');
+      } else if (cmd === 'exit') {
+          setMenuScreen('advanced_options');
+          setTerminalInput('');
+          return;
+      } else if (cmd !== '') {
+          newHistory.push(`'${cmd}' is not recognized as an internal or external command,`);
+          newHistory.push('operable program or batch file.');
+      }
+
+      newHistory.push(''); // New line
+      setTerminalOutput(newHistory);
+      setTerminalInput('');
   };
 
   // -- Render Helpers --
@@ -110,11 +356,11 @@ const AmeOSBootScreen = () => {
                     initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                     className="w-full max-w-3xl p-10 font-mono text-sm md:text-base text-gray-300 z-30"
                 >
-                    <div className="mb-6 font-bold text-white text-lg">AmeOS BIOS v2.1.4 BETA</div>
+                    <div className="mb-6 font-bold text-white text-lg">ZimDex BIOS v2.1.4 BETA</div>
                     <div className="space-y-1">
                         <p>Main Processor: Intel(R) Core(TM) i9-14900K CPU @ 6.00GHz</p>
                         <p>Memory Testing: 65536MB OK</p>
-                        <p>Detecting Primary Master ... AmeOS_System_Drive</p>
+                        <p>Detecting Primary Master ... ZimDex_System_Drive</p>
                         <p>Detecting Primary Slave ... None</p>
                         <br/>
                         <p className="text-white">System BIOS Shadowed</p>
@@ -156,7 +402,7 @@ const AmeOSBootScreen = () => {
                                 <p className="text-gray-400 text-sm leading-relaxed mb-6">
                                     Press "Restart" to restart your PC, which can sometimes fix the problem. You can also press "Advanced options" to try other repair options to repair your PC.
                                 </p>
-                                <p className="text-xs text-gray-500 font-mono">Log file: C:\Windows\System32\Logfiles\Srt\SrtTrail.txt</p>
+                                <p className="text-xs text-gray-500 font-mono">Log file: C:\ZimDex\System32\Logfiles\Srt\SrtTrail.txt</p>
                             </div>
                             <div className="bg-[#202020] p-4 flex justify-end gap-3 border-t border-white/5">
                                 <button onClick={() => setMenuScreen('choose_option')} className="px-6 py-2 bg-[#333] hover:bg-[#444] text-white text-sm font-medium rounded transition-colors border border-white/5">Advanced options</button>
@@ -165,7 +411,7 @@ const AmeOSBootScreen = () => {
                         </motion.div>
                     )}
 
-                    {/* Screen: Choose Option */}
+                    {/* ... other menu screens (choose_option, troubleshoot, etc) omitted for brevity as they are unchanged logic ... */}
                     {menuScreen === 'choose_option' && (
                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl w-full pointer-events-auto">
                              <h2 className="text-3xl font-light text-white mb-12 text-center">Choose an option</h2>
@@ -174,45 +420,25 @@ const AmeOSBootScreen = () => {
                                      <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><ArrowLeft className="rotate-180" size={20} /></div>
                                      <div className="text-left">
                                          <div className="font-medium">Continue</div>
-                                         <div className="text-xs text-gray-400">Exit and continue to Windows</div>
+                                         <div className="text-xs text-gray-400">Exit and continue to ZimDex</div>
                                      </div>
                                  </button>
-                                 <button onClick={() => triggerLoading("Scanning for devices...", "error", {title: "System Error", message: "No bootable devices found.", backTo: "choose_option"})} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
-                                     <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><Disc size={20} /></div>
-                                     <div className="text-left">
-                                         <div className="font-medium">Use a device</div>
-                                         <div className="text-xs text-gray-400">Use a USB drive, network connection, or Windows recovery DVD</div>
-                                     </div>
-                                 </button>
-                                 <button onClick={() => setMenuScreen('troubleshoot')} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
+                                 {/* ... other buttons ... */}
+                                  <button onClick={() => setMenuScreen('troubleshoot')} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
                                      <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><Wrench size={20} /></div>
                                      <div className="text-left">
                                          <div className="font-medium">Troubleshoot</div>
                                          <div className="text-xs text-gray-400">Reset your PC or see advanced options</div>
                                      </div>
                                  </button>
-                                 <button onClick={handleRestart} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
-                                     <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><Power size={20} /></div>
-                                     <div className="text-left">
-                                         <div className="font-medium">Turn off your PC</div>
-                                     </div>
-                                 </button>
                              </div>
                          </motion.div>
                     )}
-
-                    {/* Screen: Troubleshoot */}
+                    
                     {menuScreen === 'troubleshoot' && (
                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl w-full pointer-events-auto">
                              <h2 className="text-3xl font-light text-white mb-12 text-center">Troubleshoot</h2>
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto mb-8">
-                                 <button onClick={() => triggerLoading("Getting things ready...", "error", {title: "Reset failed", message: "There was a problem resetting your PC. No changes were made.", backTo: "troubleshoot"})} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
-                                     <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><RefreshCw size={20} /></div>
-                                     <div className="text-left">
-                                         <div className="font-medium">Reset this PC</div>
-                                         <div className="text-xs text-gray-400">Lets you choose to keep or remove your files, and then reinstalls Windows.</div>
-                                     </div>
-                                 </button>
                                  <button onClick={() => setMenuScreen('advanced_options')} className="bg-[#202020] hover:bg-[#2a2a2a] p-4 rounded flex items-center gap-4 transition-colors border border-white/10">
                                      <div className="w-10 h-10 rounded-full border border-white/20 flex items-center justify-center"><Wrench size={20} /></div>
                                      <div className="text-left">
@@ -220,55 +446,52 @@ const AmeOSBootScreen = () => {
                                      </div>
                                  </button>
                              </div>
-                             <div className="max-w-2xl mx-auto">
-                                <button onClick={() => setMenuScreen('choose_option')} className="flex items-center gap-2 text-white/70 hover:text-white">
-                                    <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center"><ArrowLeft size={14} /></div>
-                                    <span>Back</span>
-                                </button>
-                             </div>
                          </motion.div>
                     )}
 
-                    {/* Screen: Advanced Options */}
                     {menuScreen === 'advanced_options' && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl w-full pointer-events-auto">
                             <h2 className="text-3xl font-light text-white mb-8 text-center">Advanced options</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto mb-8">
                                 <OptionButton 
-                                    icon={Wrench} title="Startup Repair" sub="Fix problems that keep Windows from loading" 
-                                    onClick={() => triggerLoading("Diagnosing your PC...", "error", {title: "Startup Repair", message: "Startup Repair couldn't repair your PC.\nLog file: C:\\Windows\\System32\\Logfiles\\Srt\\SrtTrail.txt", backTo: "advanced_options"})}
-                                />
-                                <OptionButton 
                                     icon={Terminal} title="Command Prompt" sub="Use the Command Prompt for advanced troubleshooting" 
-                                    onClick={() => triggerLoading("Preparing Command Prompt...", "error", {title: "Error", message: "Administrator account disabled by system policy.", backTo: "advanced_options"})}
+                                    onClick={() => triggerLoading("Initializing Command Prompt...", "screen", "command_prompt")}
                                 />
-                                <OptionButton 
-                                    icon={RotateCcw} title="Uninstall Updates" sub="Remove recently installed quality or feature updates" 
-                                    onClick={() => triggerLoading("Getting ready...", "error", {title: "Uninstall Updates", message: "We ran into a problem and won't be able to uninstall the latest quality update of Windows.", backTo: "advanced_options"})}
-                                />
-                                <OptionButton 
-                                    icon={Cpu} title="UEFI Firmware Settings" sub="Change settings in your PC's UEFI firmware" 
-                                    onClick={() => triggerLoading("Restarting...", "reboot", null)}
-                                />
-                                <OptionButton 
-                                    icon={RefreshCw} title="System Restore" sub="Use a restore point recorded on your PC to restore Windows" 
-                                    onClick={() => triggerLoading("Starting System Restore...", "error", {title: "System Restore", message: "No restore points have been created on your computer's system drive.", backTo: "advanced_options"})}
-                                />
-                                <OptionButton 
-                                    icon={HardDrive} title="System Image Recovery" sub="Recover Windows using a specific system image file" 
-                                    onClick={() => triggerLoading("Scanning for system images...", "error", {title: "System Image Recovery", message: "Windows cannot find a system image on this computer.", backTo: "advanced_options"})}
-                                />
-                            </div>
-                            <div className="max-w-3xl mx-auto">
-                                <button onClick={() => setMenuScreen('troubleshoot')} className="flex items-center gap-2 text-white/70 hover:text-white">
-                                    <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center"><ArrowLeft size={14} /></div>
-                                    <span>Back</span>
-                                </button>
+                                {/* ... other options ... */}
                             </div>
                         </motion.div>
                     )}
 
-                    {/* Screen: Generic Loading */}
+                    {menuScreen === 'command_prompt' && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+                            className="w-[800px] h-[500px] bg-black border-2 border-[#333] shadow-2xl flex flex-col font-mono text-sm pointer-events-auto"
+                        >
+                             <div className="bg-[#ddd] text-black px-2 py-1 flex justify-between items-center text-xs">
+                                 <span>Administrator: X:\ZimDex\System32\cmd.exe</span>
+                                 <button onClick={() => setMenuScreen('advanced_options')} className="px-2 hover:bg-red-500 hover:text-white">X</button>
+                             </div>
+                             <div className="flex-1 p-2 overflow-y-auto custom-scrollbar text-gray-300" onClick={() => document.getElementById('cmd-input')?.focus()}>
+                                 {terminalOutput.map((line, i) => (
+                                     <div key={i}>{line}</div>
+                                 ))}
+                                 <form onSubmit={handleTerminalSubmit} className="flex">
+                                     <span className="mr-1">X:\ZimDex\System32&gt;</span>
+                                     <input 
+                                        id="cmd-input"
+                                        type="text" 
+                                        value={terminalInput}
+                                        onChange={(e) => setTerminalInput(e.target.value)}
+                                        className="flex-1 bg-transparent outline-none text-gray-300"
+                                        autoFocus
+                                        autoComplete="off"
+                                     />
+                                 </form>
+                                 <div ref={terminalEndRef} />
+                             </div>
+                        </motion.div>
+                    )}
+
                     {menuScreen === 'loading' && (
                          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-center justify-center gap-8 z-30">
                              <div className="relative">
@@ -277,27 +500,6 @@ const AmeOSBootScreen = () => {
                              <div className="text-lg font-light tracking-wide text-white">{loadingText}</div>
                          </motion.div>
                     )}
-
-                    {/* Screen: Generic Error */}
-                    {menuScreen === 'error' && (
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-                            className="max-w-lg w-full bg-[#181818] border border-white/10 shadow-2xl rounded-lg overflow-hidden pointer-events-auto"
-                        >
-                            <div className="p-8 pb-6">
-                                <h2 className="text-xl font-bold text-white mb-4">{errorState.title}</h2>
-                                <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap mb-6">
-                                    {errorState.message}
-                                </p>
-                            </div>
-                            <div className="bg-[#202020] p-4 flex justify-end gap-3 border-t border-white/5">
-                                <button onClick={() => setMenuScreen(errorState.backTo)} className="px-6 py-2 bg-[#333] hover:bg-[#444] text-white text-sm font-medium rounded transition-colors border border-white/5">
-                                    Cancel
-                                </button>
-                            </div>
-                        </motion.div>
-                    )}
-
                 </div>
             )}
         </AnimatePresence>
@@ -305,12 +507,50 @@ const AmeOSBootScreen = () => {
   );
 };
 
-export default function App() {
+const DesktopContent: React.FC = () => {
+  const { brightness, isNightLight, setLocked, isLocked, animationSpeed, animationType, theme, isTransparencyEnabled, systemFont } = useSystem();
+  
   // System Status
-  const [systemMode, setSystemMode] = useState<'normal' | 'ame_virus'>('normal');
+  const [systemMode, setSystemMode] = useState<'normal' | 'ame_virus' | 'ame_install' | 'ame_desktop' | 'ame_crash' | 'win10_installer_window' | 'win10_boot' | 'win10_env'>('normal');
+
+  // Crash State
+  const [isExplorerCrashed, setIsExplorerCrashed] = useState(false);
+  const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
+
+  // Win10 Installer State
+  const [showUAC, setShowUAC] = useState(false);
+  const [installProgress, setInstallProgress] = useState(0);
+
+  // Widgets State
+  const [activeWidgets, setActiveWidgets] = useState<WidgetInstance[]>([]);
+  const [isWidgetPickerOpen, setIsWidgetPickerOpen] = useState(false);
+  
+  const [widgetPickerPosition, setWidgetPickerPosition] = useState({ x: 0, y: 0 });
+  const [widgetPickerLaunchOrigin, setWidgetPickerLaunchOrigin] = useState({ x: 0, y: 0 });
+
+  const removeWidget = (id: string) => {
+    setActiveWidgets(prev => prev.filter(w => w.id !== id));
+  };
+
+  const updateWidgetPosition = (id: string, x: number, y: number) => {
+    setActiveWidgets(prev => prev.map(w => w.id === id ? { ...w, x, y } : w));
+  };
+
+  // Global Hotkey for Task Manager
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        // Ctrl + Shift + ~ (Tilde/Backquote)
+        if (e.ctrlKey && e.shiftKey && (e.key === '~' || e.code === 'Backquote' || e.key === '`')) {
+            e.preventDefault();
+            setIsTaskManagerOpen(prev => !prev);
+        }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Window Visibility States
-  const [isSettingsOpen, setIsSettingsOpen] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [isRecorderOpen, setIsRecorderOpen] = useState(false);
@@ -323,13 +563,23 @@ export default function App() {
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [isMonitorOpen, setIsMonitorOpen] = useState(false);
   const [isMailOpen, setIsMailOpen] = useState(false);
+  const [isPhoOpen, setIsPhoOpen] = useState(false);
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
+  const [isUninstallOpen, setIsUninstallOpen] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
   
+  // Dynamic File Windows
+  const [openFiles, setOpenFiles] = useState<Array<{ 
+    id: string; 
+    file: FileSystemNode; 
+    onSave: (id: string, content: string) => void; 
+    position: { x: number, y: number };
+  }>>([]);
+
   // Window Stack for Z-Indexing
-  // Stores IDs of open windows. The last element is "on top".
   const [windowStack, setWindowStack] = useState<string[]>(['settings']);
 
-  // Helper to bring a window to front
   const focusWindow = (id: string) => {
     setWindowStack(prev => {
         const filtered = prev.filter(w => w !== id);
@@ -337,7 +587,6 @@ export default function App() {
     });
   };
 
-  // Helper to open a window and focus it
   const openWindow = (id: string, setOpen: (v: boolean) => void) => {
       updateOrigins();
       setOpen(true);
@@ -345,14 +594,36 @@ export default function App() {
       setIsStartMenuOpen(false);
   };
 
-  // Helper to get Z-Index
+  const handleOpenFile = (file: FileSystemNode, onSave: (id: string, content: string) => void) => {
+      // Check if already open
+      const isOpen = openFiles.find(f => f.id === file.id);
+      if (isOpen) {
+          focusWindow(`file-${file.id}`);
+          return;
+      }
+
+      const centerX = (window.innerWidth - 800) / 2 + (openFiles.length * 20);
+      const centerY = (window.innerHeight - 600) / 2 + (openFiles.length * 20);
+
+      setOpenFiles(prev => [...prev, {
+          id: file.id,
+          file,
+          onSave,
+          position: { x: centerX, y: centerY }
+      }]);
+      focusWindow(`file-${file.id}`);
+  };
+
+  const closeFileWindow = (fileId: string) => {
+      setOpenFiles(prev => prev.filter(f => f.id !== fileId));
+      setWindowStack(prev => prev.filter(w => w !== `file-${fileId}`));
+  };
+
   const getZIndex = (id: string) => {
       const index = windowStack.indexOf(id);
-      // Base Z-index 50. If not found (closed), return 50.
       return 50 + (index !== -1 ? index : 0);
   };
 
-  // Helper to check if active (top of stack)
   const isActive = (id: string) => {
       return windowStack.length > 0 && windowStack[windowStack.length - 1] === id;
   };
@@ -371,15 +642,17 @@ export default function App() {
   const [filesPosition, setFilesPosition] = useState({ x: 0, y: 0 });
   const [monitorPosition, setMonitorPosition] = useState({ x: 0, y: 0 });
   const [mailPosition, setMailPosition] = useState({ x: 0, y: 0 });
+  const [phoPosition, setPhoPosition] = useState({ x: 0, y: 0 });
+  const [uninstallPosition, setUninstallPosition] = useState({ x: 0, y: 0 });
+  const [calculatorPosition, setCalculatorPosition] = useState({ x: 0, y: 0 });
+  const [notePosition, setNotePosition] = useState({ x: 0, y: 0 });
+  const [installerPosition, setInstallerPosition] = useState({ x: 0, y: 0 });
   const [hasInitializedPos, setHasInitializedPos] = useState(false);
 
-  // Start Menu Anchor
   const [startMenuX, setStartMenuX] = useState(0);
-
-  // Drag Constraints Ref
   const constraintsRef = useRef<HTMLDivElement>(null);
 
-  // Dock References for Animation Origin
+  // Dock References
   const [launchOrigin, setLaunchOrigin] = useState({ x: 0, y: 0 });
   const [musicLaunchOrigin, setMusicLaunchOrigin] = useState({ x: 0, y: 0 });
   const [galleryLaunchOrigin, setGalleryLaunchOrigin] = useState({ x: 0, y: 0 });
@@ -389,11 +662,14 @@ export default function App() {
   const [filesLaunchOrigin, setFilesLaunchOrigin] = useState({ x: 0, y: 0 });
   const [monitorLaunchOrigin, setMonitorLaunchOrigin] = useState({ x: 0, y: 0 });
   const [mailLaunchOrigin, setMailLaunchOrigin] = useState({ x: 0, y: 0 });
+  const [uninstallLaunchOrigin, setUninstallLaunchOrigin] = useState({ x: 0, y: 0 });
+  const [calculatorLaunchOrigin, setCalculatorLaunchOrigin] = useState({ x: 0, y: 0 });
+  const [noteLaunchOrigin, setNoteLaunchOrigin] = useState({ x: 0, y: 0 });
   
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const musicDockRef = useRef<HTMLDivElement>(null);
   const startButtonRef = useRef<HTMLButtonElement>(null);
-  const galleryButtonRef = useRef<HTMLButtonElement>(null);
+  const dockRefs = useRef<Map<string, HTMLButtonElement>>(new Map());
 
   // Music State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -408,126 +684,20 @@ export default function App() {
     { title: "An Than", artist: "Low G", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Chad_Crouch/Arps/Chad_Crouch_-_Algorithms.mp3", cover: "" },
     { title: "Simp Gais 808", artist: "Low G", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_04_-_Sentinel.mp3", cover: "" },
     { title: "Tam Giac", artist: "Anh Phan ft Low G", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/ccCommunity/Kai_Engel/Satin/Kai_Engel_-_06_-_Contention.mp3", cover: "" },
+    { title: "I Can't Handle Change (Instrumental)", artist: "Roar", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3", cover: "" },
+    { title: "Enthusiast", artist: "Tours", url: "https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Tours/Enthusiast/Tours_-_01_-_Enthusiast.mp3", cover: "" }
   ];
 
   // Wallpaper State
   const [wallpaperIndex, setWallpaperIndex] = useState(0);
   const [wallpapers, setWallpapers] = useState([
-    'https://images.unsplash.com/photo-1565347786727-2629aa068529?q=80&w=2000&auto=format&fit=crop', // Rooftop
-    'https://images.unsplash.com/photo-1495616811223-4d98c6e9d869?q=80&w=2000&auto=format&fit=crop', // Rain
     'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?q=80&w=2000', // Dark Mountains
     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=2000', // Yosemite
     'https://images.unsplash.com/photo-1511300636408-a63a89df3482?q=80&w=2000', // Abstract Geometry
-    'https://images.unsplash.com/photo-1534067783741-512d0deaf55c?q=80&w=2000'  // Colorful
   ]);
 
-  // Context Menu State
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; type: 'desktop' | 'music' } | null>(null);
 
-  const updateOrigins = () => {
-    if (settingsButtonRef.current) {
-      const rect = settingsButtonRef.current.getBoundingClientRect();
-      setLaunchOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    }
-    if (musicDockRef.current) {
-       const rect = musicDockRef.current.getBoundingClientRect();
-       setMusicLaunchOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
-    }
-    if (startButtonRef.current) {
-        const rect = startButtonRef.current.getBoundingClientRect();
-        setStartMenuX(rect.left + rect.width / 2);
-        const menuLaunchPoint = { x: rect.left + rect.width / 2, y: rect.top - 50 };
-        setGalleryLaunchOrigin(menuLaunchPoint); 
-        setRecorderLaunchOrigin(menuLaunchPoint);
-        setTerminalLaunchOrigin(menuLaunchPoint);
-        setBrowserLaunchOrigin(menuLaunchPoint);
-        setFilesLaunchOrigin(menuLaunchPoint);
-        setMonitorLaunchOrigin(menuLaunchPoint);
-        setMailLaunchOrigin(menuLaunchPoint);
-    }
-  };
-
-  // Initialize Positions and update on resize
-  useEffect(() => {
-    if (!hasInitializedPos) {
-      const centerX = (window.innerWidth - 950) / 2;
-      const centerY = (window.innerHeight - 600) / 2;
-      
-      setSettingsPosition({ x: centerX, y: centerY });
-      setMusicPosition({ x: centerX, y: centerY });
-      setGalleryPosition({ x: centerX, y: centerY });
-      setRecorderPosition({ x: centerX, y: centerY });
-      setTerminalPosition({ x: centerX + 50, y: centerY + 50 }); // Slight offset for style
-      setAiPosition({ x: centerX, y: centerY });
-      setImageGenPosition({ x: centerX + 30, y: centerY + 30 });
-      setVideoGenPosition({ x: centerX + 60, y: centerY + 60 });
-      setBrowserPosition({ x: centerX, y: centerY });
-      setSnakePosition({ x: centerX, y: centerY });
-      setFilesPosition({ x: centerX, y: centerY });
-      setMonitorPosition({ x: centerX, y: centerY });
-      setMailPosition({ x: centerX, y: centerY });
-      
-      setHasInitializedPos(true);
-    }
-
-    const timer = setTimeout(updateOrigins, 100);
-    window.addEventListener('resize', updateOrigins);
-    return () => {
-        window.removeEventListener('resize', updateOrigins);
-        clearTimeout(timer);
-    }
-  }, [hasInitializedPos]);
-
-  // Audio Logic
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) audioRef.current.play().catch(() => setIsPlaying(false));
-      else audioRef.current.pause();
-    }
-  }, [isPlaying, currentSong]);
-
-  const handleTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const handleLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const handleSeek = (time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
-  };
-
-  const togglePlay = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setIsPlaying(!isPlaying);
-  };
-  
-  const nextSong = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentSong((prev) => (prev + 1) % playlist.length);
-    setIsPlaying(true);
-  };
-  
-  const prevSong = (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setCurrentSong((prev) => (prev - 1 + playlist.length) % playlist.length);
-    setIsPlaying(true);
-  };
-
-  const selectSong = (index: number) => {
-     setCurrentSong(index);
-     setIsPlaying(true);
-  };
-
-  // Toggle Wrappers that use the Stack Logic
   const toggleSettings = () => {
     if (isSettingsOpen) setIsSettingsOpen(false);
     else openWindow('settings', setIsSettingsOpen);
@@ -594,6 +764,189 @@ export default function App() {
       else openWindow('mail', setIsMailOpen);
   }
 
+  const togglePho = () => {
+      if (isPhoOpen) setIsPhoOpen(false);
+      else openWindow('pho', setIsPhoOpen);
+  }
+
+  const toggleUninstall = () => {
+      if (isUninstallOpen) setIsUninstallOpen(false);
+      else openWindow('uninstall', setIsUninstallOpen);
+  }
+
+  const toggleCalculator = () => {
+      if (isCalculatorOpen) setIsCalculatorOpen(false);
+      else openWindow('calculator', setIsCalculatorOpen);
+  }
+
+  const toggleNote = () => {
+      if (isNoteOpen) setIsNoteOpen(false);
+      else openWindow('note', setIsNoteOpen);
+  }
+
+  const toggleWidgetPicker = () => {
+      if (isWidgetPickerOpen) setIsWidgetPickerOpen(false);
+      else openWindow('widgetPicker', setIsWidgetPickerOpen);
+  };
+
+  // App Configuration
+  const allApps = useMemo(() => [
+    { id: 'settings', name: 'Settings', isOpen: isSettingsOpen, toggle: toggleSettings, icon: Settings, pinned: true, color: 'bg-gray-600' },
+    { id: 'browser', name: 'Browser', isOpen: isBrowserOpen, toggle: toggleBrowser, icon: Globe, pinned: false, color: 'bg-blue-600', gradient: 'from-blue-600 to-cyan-500' },
+    { id: 'gallery', name: 'Gallery', isOpen: isGalleryOpen, toggle: toggleGallery, icon: ImageIcon, pinned: false, color: 'bg-purple-600', gradient: 'from-purple-500 to-indigo-600' },
+    { id: 'files', name: 'Files', isOpen: isFilesOpen, toggle: toggleFiles, icon: Folder, pinned: true, color: 'bg-yellow-500', gradient: 'from-yellow-500 to-orange-500' },
+    { id: 'terminal', name: 'Terminal', isOpen: isTerminalOpen, toggle: toggleTerminal, icon: Terminal, pinned: false, color: 'bg-black', gradient: 'from-gray-900 to-black border border-white/20' },
+    { id: 'music', name: 'Music', isOpen: isMusicOpen, toggle: toggleMusicApp, icon: Music, pinned: false, color: 'bg-pink-500', gradient: 'from-pink-600 to-rose-500' },
+    { id: 'recorder', name: 'Recorder', isOpen: isRecorderOpen, toggle: toggleRecorder, icon: Video, pinned: false, color: 'bg-red-500', gradient: 'from-red-600 to-red-500' },
+    { id: 'monitor', name: 'Monitor', isOpen: isMonitorOpen, toggle: toggleMonitor, icon: Monitor, pinned: false, color: 'bg-emerald-500', gradient: 'from-teal-600 to-emerald-500' },
+    { id: 'mail', name: 'Mail', isOpen: isMailOpen, toggle: toggleMail, icon: Mail, pinned: false, color: 'bg-blue-400', gradient: 'from-blue-500 to-blue-400' },
+    { id: 'note', name: 'Diary', isOpen: isNoteOpen, toggle: toggleNote, icon: StickyNote, pinned: false, color: 'bg-amber-400', gradient: 'from-amber-400 to-yellow-500' },
+    { id: 'calculator', name: 'Calculator', isOpen: isCalculatorOpen, toggle: toggleCalculator, icon: Calculator, pinned: true, color: 'bg-orange-500', gradient: 'from-orange-500 to-amber-500' },
+    { id: 'pho', name: 'Pho', isOpen: isPhoOpen, toggle: togglePho, icon: Utensils, pinned: false, color: 'bg-orange-500', gradient: 'from-orange-600 to-red-500' },
+    { id: 'snake', name: 'Snake', isOpen: isSnakeOpen, toggle: toggleSnake, icon: Gamepad2, pinned: false, color: 'bg-green-500', gradient: 'from-green-500 to-emerald-600' },
+    { id: 'ai', name: 'Liminal AI', isOpen: isAIOpen, toggle: toggleLiminalAI, icon: Sparkles, pinned: false, color: 'bg-purple-500', gradient: 'from-purple-600 to-fuchsia-600' },
+    { id: 'imageGen', name: 'Visualizer', isOpen: isImageGenOpen, toggle: toggleImageGen, icon: ImageIcon, pinned: false, color: 'bg-cyan-500', gradient: 'from-cyan-600 to-blue-600' },
+    { id: 'videoGen', name: 'Motion', isOpen: isVideoGenOpen, toggle: toggleVideoGen, icon: Film, pinned: false, color: 'bg-orange-500', gradient: 'from-orange-500 to-red-500' },
+    { id: 'uninstall', name: 'Uninstall Tool', isOpen: isUninstallOpen, toggle: toggleUninstall, icon: Trash2, pinned: false, color: 'bg-red-700', gradient: 'from-red-700 to-red-900' },
+  ], [
+    isSettingsOpen, isBrowserOpen, isGalleryOpen, isFilesOpen, isTerminalOpen,
+    isMusicOpen, isRecorderOpen, isMonitorOpen, isMailOpen, isPhoOpen, isCalculatorOpen, isNoteOpen,
+    isSnakeOpen, isAIOpen, isImageGenOpen, isVideoGenOpen, isUninstallOpen
+  ]);
+
+  const updateOrigins = () => {
+    if (settingsButtonRef.current) {
+      const rect = settingsButtonRef.current.getBoundingClientRect();
+      setLaunchOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    }
+    if (musicDockRef.current) {
+       const rect = musicDockRef.current.getBoundingClientRect();
+       setMusicLaunchOrigin({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+    }
+    if (startButtonRef.current) {
+        const rect = startButtonRef.current.getBoundingClientRect();
+        setStartMenuX(rect.left + rect.width / 2);
+        const menuLaunchPoint = { x: rect.left + rect.width / 2, y: rect.top - 50 };
+        setGalleryLaunchOrigin(menuLaunchPoint); 
+        setRecorderLaunchOrigin(menuLaunchPoint);
+        setTerminalLaunchOrigin(menuLaunchPoint);
+        setBrowserLaunchOrigin(menuLaunchPoint);
+        setFilesLaunchOrigin(menuLaunchPoint);
+        setMonitorLaunchOrigin(menuLaunchPoint);
+        setMailLaunchOrigin(menuLaunchPoint);
+        setNoteLaunchOrigin(menuLaunchPoint);
+    }
+    
+    // Update origins for dynamically docked apps
+    allApps.forEach(app => {
+        const el = dockRefs.current.get(app.id);
+        if (el) {
+            const rect = el.getBoundingClientRect();
+            const origin = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+            
+            switch(app.id) {
+                case 'settings': setLaunchOrigin(origin); break;
+                case 'music': setMusicLaunchOrigin(origin); break;
+                case 'gallery': setGalleryLaunchOrigin(origin); break;
+                case 'files': setFilesLaunchOrigin(origin); break;
+                case 'browser': setBrowserLaunchOrigin(origin); break;
+                case 'recorder': setRecorderLaunchOrigin(origin); break;
+                case 'terminal': setTerminalLaunchOrigin(origin); break;
+                case 'monitor': setMonitorLaunchOrigin(origin); break;
+                case 'mail': setMailLaunchOrigin(origin); break;
+                case 'note': setNoteLaunchOrigin(origin); break;
+                case 'uninstall': setUninstallLaunchOrigin(origin); break;
+                case 'calculator': setCalculatorLaunchOrigin(origin); break;
+            }
+        }
+    });
+  };
+
+  useEffect(() => {
+    if (!hasInitializedPos) {
+      const centerX = (window.innerWidth - 950) / 2;
+      const centerY = (window.innerHeight - 600) / 2;
+      
+      setSettingsPosition({ x: centerX, y: centerY });
+      setMusicPosition({ x: centerX, y: centerY });
+      setGalleryPosition({ x: centerX, y: centerY });
+      setRecorderPosition({ x: centerX, y: centerY });
+      setTerminalPosition({ x: centerX + 50, y: centerY + 50 });
+      setAiPosition({ x: centerX, y: centerY });
+      setImageGenPosition({ x: centerX + 30, y: centerY + 30 });
+      setVideoGenPosition({ x: centerX + 60, y: centerY + 60 });
+      setBrowserPosition({ x: centerX, y: centerY });
+      setSnakePosition({ x: centerX, y: centerY });
+      setFilesPosition({ x: centerX, y: centerY });
+      setMonitorPosition({ x: centerX, y: centerY });
+      setMailPosition({ x: centerX, y: centerY });
+      setPhoPosition({ x: centerX, y: centerY });
+      setUninstallPosition({ x: centerX, y: centerY });
+      setCalculatorPosition({ x: centerX + 100, y: centerY + 50 });
+      setNotePosition({ x: centerX + 80, y: centerY + 40 });
+      setInstallerPosition({ x: centerX, y: centerY });
+      setWidgetPickerPosition({ x: centerX, y: centerY });
+      setWidgetPickerLaunchOrigin({ x: centerX, y: centerY });
+      
+      setHasInitializedPos(true);
+    }
+
+    const timer = setTimeout(updateOrigins, 100);
+    window.addEventListener('resize', updateOrigins);
+    return () => {
+        window.removeEventListener('resize', updateOrigins);
+        clearTimeout(timer);
+    }
+  }, [hasInitializedPos, allApps]); // Depend on allApps to update origins when apps open/close in dock
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) audioRef.current.play().catch(() => setIsPlaying(false));
+      else audioRef.current.pause();
+    }
+  }, [isPlaying, currentSong]);
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleSeek = (time: number) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = time;
+      setCurrentTime(time);
+    }
+  };
+
+  const togglePlay = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setIsPlaying(!isPlaying);
+  };
+  
+  const nextSong = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setCurrentSong((prev) => (prev + 1) % playlist.length);
+    setIsPlaying(true);
+  };
+  
+  const prevSong = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setCurrentSong((prev) => (prev - 1 + playlist.length) % playlist.length);
+    setIsPlaying(true);
+  };
+
+  const selectSong = (index: number) => {
+     setCurrentSong(index);
+     setIsPlaying(true);
+  };
+
   const toggleStartMenu = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     updateOrigins();
@@ -641,9 +994,39 @@ export default function App() {
     }
   };
 
-  // Triggered by Terminal Easter Egg
   const handleInstallAmeOS = () => {
       // Close windows to simulate restart
+      closeAllWindows();
+      setSystemMode('ame_install');
+  };
+
+  const handleInstallHidden = () => {
+      setSystemMode('ame_install');
+  };
+
+  const handleAmeInstallComplete = () => {
+      setSystemMode('ame_desktop');
+  };
+
+  const handleAmeCrash = () => {
+      setSystemMode('ame_crash');
+      setTimeout(() => {
+          setSystemMode('ame_virus'); // Boot into recovery
+      }, 5000);
+  };
+
+  const handleCrashExplorer = () => {
+      setIsExplorerCrashed(true);
+      setIsUninstallOpen(false); // Close the uninstall tool when crash happens
+  };
+
+  const handleRestoreExplorer = () => {
+      setIsExplorerCrashed(false);
+      setIsFilesOpen(true);
+      focusWindow('files');
+  };
+
+  const closeAllWindows = () => {
       setIsSettingsOpen(false);
       setIsMusicOpen(false);
       setIsGalleryOpen(false);
@@ -657,17 +1040,74 @@ export default function App() {
       setIsFilesOpen(false);
       setIsMonitorOpen(false);
       setIsMailOpen(false);
+      setIsPhoOpen(false);
       setIsStartMenuOpen(false);
+      setIsUninstallOpen(false);
+      setIsCalculatorOpen(false);
+      setIsNoteOpen(false);
+      setIsWidgetPickerOpen(false);
+  };
 
-      setSystemMode('ame_virus');
+  // Windows 10 Logic
+  const handleRunWin10Installer = () => {
+      setShowUAC(true);
+  };
+
+  const handleUACResponse = (allow: boolean) => {
+      setShowUAC(false);
+      if (allow) {
+          setSystemMode('win10_installer_window');
+          focusWindow('win10-installer');
+          
+          // Simulate installation process
+          let progress = 0;
+          const interval = setInterval(() => {
+              progress += Math.random() * 15;
+              if (progress >= 100) {
+                  progress = 100;
+                  clearInterval(interval);
+                  // After install, reboot
+                  setTimeout(() => {
+                      closeAllWindows();
+                      setSystemMode('win10_env');
+                  }, 1500);
+              }
+              setInstallProgress(progress);
+          }, 500);
+      }
+  };
+
+  // Widget Drag & Drop
+  const handleWidgetDragStart = (e: React.DragEvent, type: WidgetType, style: WidgetStyle) => {
+    e.dataTransfer.setData('widgetType', type);
+    e.dataTransfer.setData('widgetStyle', style);
+  };
+
+  const handleDesktopDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const type = e.dataTransfer.getData('widgetType') as WidgetType;
+    const style = e.dataTransfer.getData('widgetStyle') as WidgetStyle;
+    
+    if (type) {
+        const newWidget: WidgetInstance = {
+            id: `widget-${Date.now()}`,
+            type,
+            style: style || 'glass',
+            x: e.clientX - 100, // Offset to center somewhat
+            y: e.clientY - 50,
+            zIndex: 10
+        };
+        setActiveWidgets(prev => [...prev, newWidget]);
+    }
+  };
+
+  const handleDesktopDragOver = (e: React.DragEvent) => {
+      e.preventDefault(); // Allow drop
   };
 
   const ZLogo = () => {
     if (systemMode === 'ame_virus') {
-        // Glitched 'A' logo when infected
-        return (
-            <div className="font-bold text-xl text-red-600 font-mono">A</div>
-        );
+        return <div className="font-bold text-xl text-red-600 font-mono">A</div>;
     }
     return (
         <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current" xmlns="http://www.w3.org/2000/svg">
@@ -676,13 +1116,111 @@ export default function App() {
     );
   };
 
+  const getDockAnimation = () => {
+      const duration = 0.2 / animationSpeed;
+      switch(animationType) {
+          case 'snappy': return { type: "spring", stiffness: 600, damping: 25 };
+          case 'bouncy': return { type: "spring", stiffness: 400, damping: 10 };
+          case 'linear': return { duration: duration, ease: "linear" };
+          case 'default':
+          default: return { type: "spring", stiffness: 500 * animationSpeed, damping: 30, mass: 0.8 };
+      }
+  };
+
+  // If in Windows 10 Environment, replace everything
+  if (systemMode === 'win10_env') {
+      return (
+          <SystemProvider>
+              <Windows10Env />
+          </SystemProvider>
+      );
+  }
+
   return (
     <div 
-      className="w-screen h-screen overflow-hidden relative bg-black select-none font-sans"
+      className={`w-screen h-screen overflow-hidden relative select-none font-sans transition-all duration-500 ${theme === 'dark' ? 'dark bg-black' : 'bg-gray-200'}`}
+      style={{ 
+        filter: `brightness(${brightness}%) ${isNightLight ? 'sepia(20%) hue-rotate(-10deg)' : ''}`,
+        fontFamily: systemFont
+      }}
       onClick={handleGlobalClick}
       onContextMenu={(e) => handleContextMenu(e, 'desktop')}
     >
-      {systemMode === 'ame_virus' && <AmeOSBootScreen />}
+      
+      {/* UAC Modal - Redesigned */}
+      <AnimatePresence>
+        {showUAC && (
+            <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                <motion.div 
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-[#1c1c1e] w-full max-w-md rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 overflow-hidden"
+                >
+                    <div className="p-6 flex flex-col items-center text-center">
+                        <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mb-4 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.2)]">
+                            <Shield className="text-yellow-500" size={32} />
+                        </div>
+                        
+                        <h3 className="text-xl font-bold text-white mb-2">Admin Access Required</h3>
+                        <p className="text-gray-400 text-sm mb-6 leading-relaxed">
+                            <span className="text-white font-medium">Windows 10 Installer</span> is requesting permission to make changes to your system.
+                        </p>
+
+                        <div className="w-full bg-white/5 rounded-lg p-3 mb-6 text-left border border-white/5">
+                            <div className="flex justify-between text-xs mb-1">
+                                <span className="text-gray-500">Publisher</span>
+                                <span className="text-gray-300">Microsoft Corporation</span>
+                            </div>
+                            <div className="flex justify-between text-xs">
+                                <span className="text-gray-500">Origin</span>
+                                <span className="text-gray-300">Local Drive</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 w-full">
+                            <button 
+                                onClick={() => handleUACResponse(false)}
+                                className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-medium rounded-xl transition-all"
+                            >
+                                Deny
+                            </button>
+                            <button 
+                                onClick={() => handleUACResponse(true)}
+                                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl shadow-lg shadow-blue-600/20 transition-all"
+                            >
+                                Authorize
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
+
+      {/* Lock Screen */}
+      <AnimatePresence>
+        {systemMode === 'normal' && isLocked && <LockScreen key="lock" />}
+      </AnimatePresence>
+
+      {systemMode === 'ame_virus' && (
+          <AmeOSBootScreen 
+            onRecover={() => setSystemMode('normal')} 
+            onInstallHiddenOS={handleInstallHidden}
+          />
+      )}
+      
+      {systemMode === 'ame_install' && (
+          <AmeOSInstaller onComplete={handleAmeInstallComplete} />
+      )}
+
+      {systemMode === 'ame_desktop' && (
+          <AmeOSDesktop onCrash={handleAmeCrash} />
+      )}
+
+      {systemMode === 'ame_crash' && (
+          <LinuxCrashScreen />
+      )}
 
       <audio 
         ref={audioRef}
@@ -694,420 +1232,618 @@ export default function App() {
 
       <CustomCursor />
 
-      <div 
-        className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-700 ease-in-out"
-        style={{ 
-          backgroundImage: `url("${wallpapers[wallpaperIndex]}")`,
-        }}
-      >
-        <div className="absolute inset-0 bg-black/20" />
-      </div>
+      {/* EXPLORER CRASH OVERLAY - BLACK SCREEN */}
+      {isExplorerCrashed && (
+          <div className="absolute inset-0 bg-black z-[9000] cursor-default" onContextMenu={(e) => e.preventDefault()}></div>
+      )}
 
-      <div className="absolute top-0 left-0 right-0 h-10 flex justify-between items-center px-6 z-20 pointer-events-none">
-          <div className="pointer-events-auto">
-             <Clock />
+      {/* TASK MANAGER - ALWAYS ON TOP IF OPEN */}
+      {isTaskManagerOpen && (
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[450px] z-[9999] shadow-2xl rounded overflow-hidden font-sans">
+              <TaskManager onClose={() => setIsTaskManagerOpen(false)} onRestoreExplorer={handleRestoreExplorer} />
           </div>
-      </div>
+      )}
 
-      {/* Start Menu Layer */}
-      <div className="relative z-[200]">
-        <AnimatePresence>
-            {isStartMenuOpen && (
-            <StartMenu 
-                onClose={() => setIsStartMenuOpen(false)} 
-                onOpenSettings={toggleSettings}
-                onOpenGallery={toggleGallery}
-                onOpenRecorder={toggleRecorder}
-                onOpenTerminal={toggleTerminal}
-                onOpenBrowser={toggleBrowser}
-                onOpenFiles={toggleFiles}
-                onOpenMonitor={toggleMonitor}
-                onOpenMail={toggleMail}
-                onOpenMusic={toggleMusicApp}
-                anchorX={startMenuX}
-            />
+      {/* Normal Desktop Content - Hidden if Explorer Crashed */}
+      {!isExplorerCrashed && (
+      <motion.div 
+         className="absolute inset-0 w-full h-full"
+         animate={{
+            scale: isLocked ? 1.1 : 1,
+            filter: isLocked ? "blur(15px) brightness(0.8)" : "none"
+         }}
+         transition={{ duration: 0.6 / animationSpeed, ease: [0.22, 1, 0.36, 1] }}
+         onDrop={handleDesktopDrop}
+         onDragOver={handleDesktopDragOver}
+      >
+        <div 
+            className="absolute inset-0 w-full h-full bg-cover bg-center transition-all duration-700 ease-in-out"
+            style={{ 
+            backgroundImage: `url("${wallpapers[wallpaperIndex]}")`,
+            }}
+        >
+            {/* Dark mode overlay vs Light mode overlay */}
+            <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'dark' ? 'bg-black/20' : 'bg-white/5'}`} />
+        </div>
+
+        <div className="absolute top-0 left-0 right-0 h-10 flex justify-between items-center px-6 z-20 pointer-events-none">
+            <div className="pointer-events-auto">
+                <Clock />
+            </div>
+        </div>
+
+        {/* Desktop Widgets Layer */}
+        <DesktopWidgets 
+            widgets={activeWidgets} 
+            onRemoveWidget={removeWidget} 
+            onUpdatePosition={updateWidgetPosition} 
+        />
+
+        {/* Start Menu Layer */}
+        <div className="relative z-[200]">
+            <AnimatePresence>
+                {isStartMenuOpen && (
+                <StartMenu 
+                    onClose={() => setIsStartMenuOpen(false)} 
+                    onOpenSettings={toggleSettings}
+                    onOpenGallery={toggleGallery}
+                    onOpenRecorder={toggleRecorder}
+                    onOpenTerminal={toggleTerminal}
+                    onOpenBrowser={toggleBrowser}
+                    onOpenFiles={toggleFiles}
+                    onOpenMonitor={toggleMonitor}
+                    onOpenMail={toggleMail}
+                    onOpenMusic={toggleMusicApp}
+                    onOpenPho={togglePho}
+                    onOpenCalculator={toggleCalculator}
+                    onOpenNote={toggleNote}
+                    anchorX={startMenuX}
+                />
+                )}
+            </AnimatePresence>
+        </div>
+
+        {/* Window Manager Layer */}
+        <div 
+            ref={constraintsRef} 
+            className="absolute inset-0 z-30 pointer-events-none overflow-hidden perspective-[2000px]"
+        >
+            <AnimatePresence>
+            
+            {/* Windows 10 Installer Window */}
+            {systemMode === 'win10_installer_window' && (
+                <OSWindow
+                    key="win10-installer"
+                    isOpen={true}
+                    onClose={() => {}} // Prevent closing
+                    title="Windows 10 Setup"
+                    isActive={true}
+                    zIndex={9999}
+                    onFocus={() => {}}
+                    launchOrigin={filesPosition}
+                    initialPosition={installerPosition}
+                    onDragEnd={() => {}}
+                    dragConstraints={constraintsRef}
+                    width={600}
+                    height={400}
+                >
+                    <div className="w-full h-full bg-[#4b0082] text-white flex flex-col p-8 font-sans">
+                        <h1 className="text-2xl font-light mb-8">Installing Windows 10</h1>
+                        <p className="text-sm mb-2">Your PC will restart several times. This might take a while.</p>
+                        <div className="text-4xl font-light mb-8">{Math.round(installProgress)}%</div>
+                        <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-white transition-all duration-300 ease-out" 
+                                style={{ width: `${installProgress}%` }}
+                            />
+                        </div>
+                        <div className="mt-auto text-xs text-white/60 text-center">
+                            Copying files...
+                        </div>
+                    </div>
+                </OSWindow>
             )}
-        </AnimatePresence>
-      </div>
 
-      {/* Window Manager Layer */}
-      <div 
-        ref={constraintsRef} 
-        className="absolute inset-0 z-30 pointer-events-none overflow-hidden perspective-[2000px]"
-      >
-         <AnimatePresence>
-           {isSettingsOpen && (
-             <OSWindow 
-               key="settings-window"
-               isOpen={isSettingsOpen} 
-               onClose={toggleSettings}
-               title="Settings"
-               isActive={isActive('settings')}
-               zIndex={getZIndex('settings')}
-               onFocus={() => focusWindow('settings')}
-               launchOrigin={launchOrigin}
-               initialPosition={settingsPosition}
-               onDragEnd={(pos) => setSettingsPosition(pos)}
-               dragConstraints={constraintsRef}
-             >
-               <SettingsApp />
-             </OSWindow>
-           )}
-
-           {isMusicOpen && (
-             <OSWindow
-                key="music-window"
-                isOpen={isMusicOpen}
-                onClose={toggleMusicApp}
-                title="Music Player"
-                isActive={isActive('music')}
-                zIndex={getZIndex('music')}
-                onFocus={() => focusWindow('music')}
-                launchOrigin={musicLaunchOrigin}
-                initialPosition={musicPosition}
-                onDragEnd={(pos) => setMusicPosition(pos)}
+            {isSettingsOpen && (
+                <OSWindow 
+                key="settings-window"
+                isOpen={isSettingsOpen} 
+                onClose={toggleSettings}
+                title="Settings"
+                isActive={isActive('settings')}
+                zIndex={getZIndex('settings')}
+                onFocus={() => focusWindow('settings')}
+                launchOrigin={launchOrigin}
+                initialPosition={settingsPosition}
+                onDragEnd={(pos) => setSettingsPosition(pos)}
                 dragConstraints={constraintsRef}
-              >
-                <MusicApp 
-                  isPlaying={isPlaying}
-                  currentSong={playlist[currentSong]}
-                  playlist={playlist}
-                  onTogglePlay={() => setIsPlaying(!isPlaying)}
-                  onNext={nextSong}
-                  onPrev={prevSong}
-                  onPlay={selectSong}
-                  currentTime={currentTime}
-                  duration={duration}
-                  onSeek={handleSeek}
-               />
-             </OSWindow>
-           )}
+                >
+                <SettingsApp onOpenWidgetPicker={toggleWidgetPicker} />
+                </OSWindow>
+            )}
 
-           {isGalleryOpen && (
-              <OSWindow
-                key="gallery-window"
-                isOpen={isGalleryOpen}
-                onClose={toggleGallery}
-                title="Gallery & Wallpapers"
-                isActive={isActive('gallery')}
-                zIndex={getZIndex('gallery')}
-                onFocus={() => focusWindow('gallery')}
-                launchOrigin={galleryLaunchOrigin}
-                initialPosition={galleryPosition}
-                onDragEnd={(pos) => setGalleryPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <WallpaperApp 
-                  wallpapers={wallpapers}
-                  activeIndex={wallpaperIndex}
-                  onSelect={setWallpaperIndex}
-                  onAdd={handleAddWallpaper}
-                  onRemove={handleRemoveWallpaper}
+            {isWidgetPickerOpen && (
+                <OSWindow
+                    key="widget-picker-window"
+                    isOpen={isWidgetPickerOpen}
+                    onClose={toggleWidgetPicker}
+                    title="Widget Gallery"
+                    isActive={isActive('widgetPicker')}
+                    zIndex={getZIndex('widgetPicker')}
+                    onFocus={() => focusWindow('widgetPicker')}
+                    launchOrigin={widgetPickerLaunchOrigin}
+                    initialPosition={widgetPickerPosition}
+                    onDragEnd={(pos) => setWidgetPickerPosition(pos)}
+                    dragConstraints={constraintsRef}
+                    width={920}
+                    height={650}
+                >
+                    <WidgetPicker onDragStart={handleWidgetDragStart} />
+                </OSWindow>
+            )}
+
+            {isMusicOpen && (
+                <OSWindow
+                    key="music-window"
+                    isOpen={isMusicOpen}
+                    onClose={toggleMusicApp}
+                    title="Music Player"
+                    isActive={isActive('music')}
+                    zIndex={getZIndex('music')}
+                    onFocus={() => focusWindow('music')}
+                    launchOrigin={musicLaunchOrigin}
+                    initialPosition={musicPosition}
+                    onDragEnd={(pos) => setMusicPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <MusicApp 
+                    isPlaying={isPlaying}
+                    currentSong={playlist[currentSong]}
+                    playlist={playlist}
+                    onTogglePlay={() => setIsPlaying(!isPlaying)}
+                    onNext={nextSong}
+                    onPrev={prevSong}
+                    onPlay={selectSong}
+                    currentTime={currentTime}
+                    duration={duration}
+                    onSeek={handleSeek}
                 />
-              </OSWindow>
-           )}
+                </OSWindow>
+            )}
 
-           {isRecorderOpen && (
-              <OSWindow
-                key="recorder-window"
-                isOpen={isRecorderOpen}
-                onClose={toggleRecorder}
-                title="Screen Recorder"
-                isActive={isActive('recorder')}
-                zIndex={getZIndex('recorder')}
-                onFocus={() => focusWindow('recorder')}
-                launchOrigin={recorderLaunchOrigin}
-                initialPosition={recorderPosition}
-                onDragEnd={(pos) => setRecorderPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <ScreenRecorderApp />
-              </OSWindow>
-           )}
+            {/* ... (Other windows like Gallery, Recorder, Terminal, Browser, Files, Monitor, Mail, Calculator, Note, AI, ImageGen, VideoGen, Pho, Uninstall, and OpenFiles remain identical) ... */}
+            
+            {isGalleryOpen && (
+                <OSWindow
+                    key="gallery-window"
+                    isOpen={isGalleryOpen}
+                    onClose={toggleGallery}
+                    title="Gallery & Wallpapers"
+                    isActive={isActive('gallery')}
+                    zIndex={getZIndex('gallery')}
+                    onFocus={() => focusWindow('gallery')}
+                    launchOrigin={galleryLaunchOrigin}
+                    initialPosition={galleryPosition}
+                    onDragEnd={(pos) => setGalleryPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <WallpaperApp 
+                    wallpapers={wallpapers}
+                    activeIndex={wallpaperIndex}
+                    onSelect={setWallpaperIndex}
+                    onAdd={handleAddWallpaper}
+                    onRemove={handleRemoveWallpaper}
+                    />
+                </OSWindow>
+            )}
 
-           {isTerminalOpen && (
-              <OSWindow
-                key="terminal-window"
-                isOpen={isTerminalOpen}
-                onClose={toggleTerminal}
-                title="Terminal"
-                isActive={isActive('terminal')}
-                zIndex={getZIndex('terminal')}
-                onFocus={() => focusWindow('terminal')}
-                launchOrigin={terminalLaunchOrigin}
-                initialPosition={terminalPosition}
-                onDragEnd={(pos) => setTerminalPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <TerminalApp 
-                   onUnlockSecret={() => openWindow('ai', setIsAIOpen)} 
-                   onOpenBrowser={() => openWindow('browser', setIsBrowserOpen)} 
-                   onOpenSnake={() => openWindow('snake', setIsSnakeOpen)}
-                   onInstallAmeOS={handleInstallAmeOS}
-                   onOpenImageGen={() => openWindow('imageGen', setIsImageGenOpen)}
-                   onOpenVideoGen={() => openWindow('videoGen', setIsVideoGenOpen)}
-                />
-              </OSWindow>
-           )}
+            {isRecorderOpen && (
+                <OSWindow
+                    key="recorder-window"
+                    isOpen={isRecorderOpen}
+                    onClose={toggleRecorder}
+                    title="Screen Recorder"
+                    isActive={isActive('recorder')}
+                    zIndex={getZIndex('recorder')}
+                    onFocus={() => focusWindow('recorder')}
+                    launchOrigin={recorderLaunchOrigin}
+                    initialPosition={recorderPosition}
+                    onDragEnd={(pos) => setRecorderPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <ScreenRecorderApp />
+                </OSWindow>
+            )}
 
-           {isBrowserOpen && (
-              <OSWindow
-                key="browser-window"
-                isOpen={isBrowserOpen}
-                onClose={toggleBrowser}
-                title="ZimDex Browser"
-                isActive={isActive('browser')}
-                zIndex={getZIndex('browser')}
-                onFocus={() => focusWindow('browser')}
-                launchOrigin={browserLaunchOrigin}
-                initialPosition={browserPosition}
-                onDragEnd={(pos) => setBrowserPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <BrowserApp />
-              </OSWindow>
-           )}
+            {isTerminalOpen && (
+                <OSWindow
+                    key="terminal-window"
+                    isOpen={isTerminalOpen}
+                    onClose={toggleTerminal}
+                    title="Terminal"
+                    isActive={isActive('terminal')}
+                    zIndex={getZIndex('terminal')}
+                    onFocus={() => focusWindow('terminal')}
+                    launchOrigin={terminalLaunchOrigin}
+                    initialPosition={terminalPosition}
+                    onDragEnd={(pos) => setTerminalPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <TerminalApp 
+                    onUnlockSecret={() => openWindow('ai', setIsAIOpen)} 
+                    onOpenBrowser={() => openWindow('browser', setIsBrowserOpen)} 
+                    onOpenSnake={() => openWindow('pho', setIsPhoOpen)}
+                    onInstallAmeOS={handleInstallAmeOS}
+                    onOpenImageGen={() => openWindow('imageGen', setIsImageGenOpen)}
+                    onOpenVideoGen={() => openWindow('videoGen', setIsVideoGenOpen)}
+                    onOpenPho={() => openWindow('pho', setIsPhoOpen)}
+                    onDeleteFileExplorer={handleCrashExplorer}
+                    onOpenUninstallTool={() => openWindow('uninstall', setIsUninstallOpen)}
+                    />
+                </OSWindow>
+            )}
 
-           {isFilesOpen && (
-              <OSWindow
-                key="files-window"
-                isOpen={isFilesOpen}
-                onClose={toggleFiles}
-                title="File Explorer"
-                isActive={isActive('files')}
-                zIndex={getZIndex('files')}
-                onFocus={() => focusWindow('files')}
-                launchOrigin={filesLaunchOrigin}
-                initialPosition={filesPosition}
-                onDragEnd={(pos) => setFilesPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <FileExplorerApp />
-              </OSWindow>
-           )}
+            {isBrowserOpen && (
+                <OSWindow
+                    key="browser-window"
+                    isOpen={isBrowserOpen}
+                    onClose={toggleBrowser}
+                    title="ZimDex Browser"
+                    isActive={isActive('browser')}
+                    zIndex={getZIndex('browser')}
+                    onFocus={() => focusWindow('browser')}
+                    launchOrigin={browserLaunchOrigin}
+                    initialPosition={browserPosition}
+                    onDragEnd={(pos) => setBrowserPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <BrowserApp />
+                </OSWindow>
+            )}
 
-           {isMonitorOpen && (
-              <OSWindow
-                key="monitor-window"
-                isOpen={isMonitorOpen}
-                onClose={toggleMonitor}
-                title="System Monitor"
-                isActive={isActive('monitor')}
-                zIndex={getZIndex('monitor')}
-                onFocus={() => focusWindow('monitor')}
-                launchOrigin={monitorLaunchOrigin}
-                initialPosition={monitorPosition}
-                onDragEnd={(pos) => setMonitorPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <MonitorApp />
-              </OSWindow>
-           )}
+            {isFilesOpen && (
+                <OSWindow
+                    key="files-window"
+                    isOpen={isFilesOpen}
+                    onClose={toggleFiles}
+                    title="File Explorer"
+                    isActive={isActive('files')}
+                    zIndex={getZIndex('files')}
+                    onFocus={() => focusWindow('files')}
+                    launchOrigin={filesLaunchOrigin}
+                    initialPosition={filesPosition}
+                    onDragEnd={(pos) => setFilesPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <FileExplorerApp 
+                        onOpenFile={handleOpenFile}
+                        onSystemDelete={handleAmeCrash}
+                        onRunInstaller={handleRunWin10Installer}
+                    />
+                </OSWindow>
+            )}
 
-           {isMailOpen && (
-              <OSWindow
-                key="mail-window"
-                isOpen={isMailOpen}
-                onClose={toggleMail}
-                title="Mail"
-                isActive={isActive('mail')}
-                zIndex={getZIndex('mail')}
-                onFocus={() => focusWindow('mail')}
-                launchOrigin={mailLaunchOrigin}
-                initialPosition={mailPosition}
-                onDragEnd={(pos) => setMailPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <MailApp />
-              </OSWindow>
-           )}
+            {isMonitorOpen && (
+                <OSWindow
+                    key="monitor-window"
+                    isOpen={isMonitorOpen}
+                    onClose={toggleMonitor}
+                    title="System Monitor"
+                    isActive={isActive('monitor')}
+                    zIndex={getZIndex('monitor')}
+                    onFocus={() => focusWindow('monitor')}
+                    launchOrigin={monitorLaunchOrigin}
+                    initialPosition={monitorPosition}
+                    onDragEnd={(pos) => setMonitorPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <MonitorApp />
+                </OSWindow>
+            )}
 
-           {isAIOpen && (
-              <OSWindow
-                key="ai-window"
-                isOpen={isAIOpen}
-                onClose={toggleLiminalAI}
-                title="Liminal AI // CLASSIFIED"
-                isActive={isActive('ai')}
-                zIndex={getZIndex('ai')}
-                onFocus={() => focusWindow('ai')}
-                launchOrigin={terminalPosition} 
-                initialPosition={aiPosition}
-                onDragEnd={(pos) => setAiPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <LiminalAIApp />
-              </OSWindow>
-           )}
+            {isMailOpen && (
+                <OSWindow
+                    key="mail-window"
+                    isOpen={isMailOpen}
+                    onClose={toggleMail}
+                    title="Mail"
+                    isActive={isActive('mail')}
+                    zIndex={getZIndex('mail')}
+                    onFocus={() => focusWindow('mail')}
+                    launchOrigin={mailLaunchOrigin}
+                    initialPosition={mailPosition}
+                    onDragEnd={(pos) => setMailPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <MailApp />
+                </OSWindow>
+            )}
 
-           {isImageGenOpen && (
-              <OSWindow
-                key="imageGen-window"
-                isOpen={isImageGenOpen}
-                onClose={toggleImageGen}
-                title="Liminal Visualizer // CLASSIFIED"
-                isActive={isActive('imageGen')}
-                zIndex={getZIndex('imageGen')}
-                onFocus={() => focusWindow('imageGen')}
-                launchOrigin={terminalPosition} 
-                initialPosition={imageGenPosition}
-                onDragEnd={(pos) => setImageGenPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <LiminalImageApp />
-              </OSWindow>
-           )}
+            {isCalculatorOpen && (
+                <OSWindow
+                    key="calculator-window"
+                    isOpen={isCalculatorOpen}
+                    onClose={toggleCalculator}
+                    title="Calculator"
+                    isActive={isActive('calculator')}
+                    zIndex={getZIndex('calculator')}
+                    onFocus={() => focusWindow('calculator')}
+                    launchOrigin={calculatorLaunchOrigin}
+                    initialPosition={calculatorPosition}
+                    onDragEnd={(pos) => setCalculatorPosition(pos)}
+                    dragConstraints={constraintsRef}
+                    width={320}
+                    height={540}
+                >
+                    <CalculatorApp />
+                </OSWindow>
+            )}
 
-           {isVideoGenOpen && (
-              <OSWindow
-                key="videoGen-window"
-                isOpen={isVideoGenOpen}
-                onClose={toggleVideoGen}
-                title="Liminal Motion Engine // CLASSIFIED"
-                isActive={isActive('videoGen')}
-                zIndex={getZIndex('videoGen')}
-                onFocus={() => focusWindow('videoGen')}
-                launchOrigin={terminalPosition} 
-                initialPosition={videoGenPosition}
-                onDragEnd={(pos) => setVideoGenPosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <LiminalVideoApp />
-              </OSWindow>
-           )}
+            {isNoteOpen && (
+                <OSWindow
+                    key="note-window"
+                    isOpen={isNoteOpen}
+                    onClose={toggleNote}
+                    title="My Diary"
+                    isActive={isActive('note')}
+                    zIndex={getZIndex('note')}
+                    onFocus={() => focusWindow('note')}
+                    launchOrigin={noteLaunchOrigin}
+                    initialPosition={notePosition}
+                    onDragEnd={(pos) => setNotePosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <NoteApp />
+                </OSWindow>
+            )}
 
-           {isSnakeOpen && (
-              <OSWindow
-                key="snake-window"
-                isOpen={isSnakeOpen}
-                onClose={toggleSnake}
-                title="ZImGame // Arcade"
-                isActive={isActive('snake')}
-                zIndex={getZIndex('snake')}
-                onFocus={() => focusWindow('snake')}
-                launchOrigin={terminalPosition}
-                initialPosition={snakePosition}
-                onDragEnd={(pos) => setSnakePosition(pos)}
-                dragConstraints={constraintsRef}
-              >
-                <SnakeGameApp />
-              </OSWindow>
-           )}
-         </AnimatePresence>
-      </div>
+            {isAIOpen && (
+                <OSWindow
+                    key="ai-window"
+                    isOpen={isAIOpen}
+                    onClose={toggleLiminalAI}
+                    title="Liminal AI // CLASSIFIED"
+                    isActive={isActive('ai')}
+                    zIndex={getZIndex('ai')}
+                    onFocus={() => focusWindow('ai')}
+                    launchOrigin={terminalPosition} 
+                    initialPosition={aiPosition}
+                    onDragEnd={(pos) => setAiPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <LiminalAIApp />
+                </OSWindow>
+            )}
 
-      {/* Bottom Dock */}
-      <div 
-        className="absolute bottom-0 left-0 right-0 z-[200] flex justify-center pb-4 pointer-events-none"
-        onContextMenu={(e) => e.stopPropagation()} 
-      >
-         <div className="
-            flex items-center px-2 py-2
-            h-[68px]
-            bg-[#1c1c1e]/80 backdrop-blur-2xl 
-            border border-white/10 
-            shadow-2xl pointer-events-auto
-            rounded-2xl
-            min-w-[600px]
-         ">
-            <button 
-                ref={startButtonRef}
-                onClick={toggleStartMenu}
-                className={`
-                w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 mr-2
-                ${isStartMenuOpen ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40' : 'text-white/90 hover:bg-white/10 hover:scale-105'}
-                ${systemMode === 'ame_virus' ? 'bg-red-900/50 hover:bg-red-800/50' : ''}
-                `}
-            >
-                <ZLogo />
-            </button>
+            {isImageGenOpen && (
+                <OSWindow
+                    key="imageGen-window"
+                    isOpen={isImageGenOpen}
+                    onClose={toggleImageGen}
+                    title="Liminal Visualizer // CLASSIFIED"
+                    isActive={isActive('imageGen')}
+                    zIndex={getZIndex('imageGen')}
+                    onFocus={() => focusWindow('imageGen')}
+                    launchOrigin={terminalPosition} 
+                    initialPosition={imageGenPosition}
+                    onDragEnd={(pos) => setImageGenPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <LiminalImageApp />
+                </OSWindow>
+            )}
 
-            <div className="w-[1px] h-8 bg-white/10 mx-2" />
+            {isVideoGenOpen && (
+                <OSWindow
+                    key="videoGen-window"
+                    isOpen={isVideoGenOpen}
+                    onClose={toggleVideoGen}
+                    title="Liminal Motion Engine // CLASSIFIED"
+                    isActive={isActive('videoGen')}
+                    zIndex={getZIndex('videoGen')}
+                    onFocus={() => focusWindow('videoGen')}
+                    launchOrigin={terminalPosition} 
+                    initialPosition={videoGenPosition}
+                    onDragEnd={(pos) => setVideoGenPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <LiminalVideoApp />
+                </OSWindow>
+            )}
 
-            <div className="flex items-center gap-3 px-2">
-               <div className="relative group">
-                   <button 
-                     ref={settingsButtonRef}
-                     onClick={toggleSettings}
-                     className={`
-                        w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-500 ease-out
-                        ${isSettingsOpen ? 'bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
-                     `}
-                   >
-                      <div className={`transition-transform duration-[3s] ease-linear ${isSettingsOpen ? 'rotate-[120deg]' : ''}`}>
-                        <Settings size={26} className="text-white drop-shadow-md" strokeWidth={1.5} />
-                      </div>
-                   </button>
-                   <div className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full transition-all duration-300 ${isSettingsOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
-               </div>
+            {isPhoOpen && (
+                <OSWindow
+                    key="pho-window"
+                    isOpen={isPhoOpen}
+                    onClose={togglePho}
+                    title="Pho Anh Hai"
+                    isActive={isActive('pho')}
+                    zIndex={getZIndex('pho')}
+                    onFocus={() => focusWindow('pho')}
+                    launchOrigin={terminalPosition}
+                    initialPosition={phoPosition}
+                    onDragEnd={(pos) => setPhoPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <PhoAnhHaiApp />
+                </OSWindow>
+            )}
+            
+            {isUninstallOpen && (
+                <OSWindow
+                    key="uninstall-window"
+                    isOpen={isUninstallOpen}
+                    onClose={toggleUninstall}
+                    title="Uninstall Tool"
+                    isActive={isActive('uninstall')}
+                    zIndex={getZIndex('uninstall')}
+                    onFocus={() => focusWindow('uninstall')}
+                    launchOrigin={uninstallLaunchOrigin}
+                    initialPosition={uninstallPosition}
+                    onDragEnd={(pos) => setUninstallPosition(pos)}
+                    dragConstraints={constraintsRef}
+                >
+                    <UninstallApp onDeleteFileExplorer={handleCrashExplorer} onClose={toggleUninstall} />
+                </OSWindow>
+            )}
 
-               <button className="w-12 h-12 rounded-xl flex items-center justify-center hover:bg-white/10 hover:-translate-y-2 hover:scale-110 transition-all duration-300">
-                  <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-                    <Search className="text-black" size={20} />
-                  </div>
-               </button>
-               
-               <button 
-                 onClick={toggleGallery}
-                 className={`
-                   w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
-                   ${isGalleryOpen ? 'bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
-                 `}
-               >
-                   <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg">
-                      <ImageIcon size={20} />
-                   </div>
-               </button>
+            {openFiles.map((fileWin) => {
+                const winId = `file-${fileWin.id}`;
+                const updatePos = (pos: {x:number, y:number}) => {
+                    setOpenFiles(prev => prev.map(fw => fw.id === fileWin.id ? { ...fw, position: pos } : fw));
+                };
 
-               <button 
-                 onClick={toggleFiles}
-                 className={`
-                   w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
-                   ${isFilesOpen ? 'bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
-                 `}
-               >
-                   <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center text-white shadow-lg">
-                      <Folder size={20} fill="currentColor" className="text-white/90" />
-                   </div>
-               </button>
-            </div>
-
-            <div className="flex-1" />
-
-            <div 
-                ref={musicDockRef}
-                onContextMenu={(e) => handleContextMenu(e, 'music')}
-                onClick={toggleMusicApp}
-                className="hidden lg:flex items-center gap-3 px-3 py-1 hover:bg-white/5 rounded-xl transition-colors cursor-pointer mr-2"
-            >
-                <div className={`w-9 h-9 bg-gray-800 rounded-lg overflow-hidden shadow-inner border border-white/5 relative flex items-center justify-center`}>
-                    <motion.div 
-                        className="w-full h-full bg-gradient-to-br from-gray-800 to-black flex items-center justify-center"
-                        animate={{ rotate: isPlaying ? 360 : 0 }}
-                        transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                return (
+                    <OSWindow
+                        key={winId}
+                        isOpen={true}
+                        onClose={() => closeFileWindow(fileWin.id)}
+                        title={fileWin.file.name}
+                        isActive={isActive(winId)}
+                        zIndex={getZIndex(winId)}
+                        onFocus={() => focusWindow(winId)}
+                        launchOrigin={filesPosition}
+                        initialPosition={fileWin.position}
+                        onDragEnd={updatePos}
+                        dragConstraints={constraintsRef}
                     >
-                       <div className="w-3 h-3 rounded-full border-[3px] border-white/10" />
-                       <div className="absolute inset-0 rounded-lg border border-white/5" />
-                    </motion.div>
+                        {['text', 'code'].includes(fileWin.file.type) ? (
+                            <TextEditor file={fileWin.file} onSave={fileWin.onSave} />
+                        ) : fileWin.file.type === 'image' ? (
+                            <ImageViewer file={fileWin.file} onSave={fileWin.onSave} />
+                        ) : ['audio', 'video'].includes(fileWin.file.type) ? (
+                            <MediaPlayer file={fileWin.file} />
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-gray-400">
+                                No preview available.
+                            </div>
+                        )}
+                    </OSWindow>
+                );
+            })}
+
+            </AnimatePresence>
+        </div>
+
+        {/* Bottom Dock */}
+        <div 
+            className="absolute bottom-0 left-0 right-0 z-[200] flex justify-center pb-4 pointer-events-none"
+            onContextMenu={(e) => e.stopPropagation()} 
+        >
+            <div className={`
+                flex items-center px-2 py-2
+                h-[68px]
+                border border-white/20 dark:border-white/10
+                shadow-2xl pointer-events-auto
+                rounded-2xl
+                min-w-[600px]
+                ${isTransparencyEnabled ? 'bg-white/60 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl' : 'bg-white dark:bg-[#1c1c1e]'}
+            `}>
+                <button 
+                    ref={startButtonRef}
+                    onClick={toggleStartMenu}
+                    className={`
+                    w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 mr-2
+                    ${isStartMenuOpen ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40' : 'text-gray-800 dark:text-white/90 hover:bg-black/10 dark:hover:bg-white/10 hover:scale-105'}
+                    ${systemMode === 'ame_virus' ? 'bg-red-900/50 hover:bg-red-800/50' : ''}
+                    `}
+                >
+                    <ZLogo />
+                </button>
+
+                <div className="w-[1px] h-8 bg-black/10 dark:bg-white/10 mx-2" />
+
+                <div className="flex items-center gap-2 px-2">
+                    <AnimatePresence mode="popLayout">
+                    {allApps.filter(app => app.pinned || app.isOpen).map((app, index, array) => {
+                        // Check if previous item was pinned and current is not (to add separator)
+                        const isSeparator = !app.pinned && array[index-1]?.pinned;
+
+                        return (
+                            <motion.div 
+                                key={app.id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.5, y: 50 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.5, y: 50, transition: { duration: 0.2 / animationSpeed } }}
+                                transition={getDockAnimation() as any}
+                                className="flex items-center"
+                            >
+                                {isSeparator && <div className="w-[1px] h-8 bg-black/10 dark:bg-white/10 mx-1" />}
+                                <div className="relative group">
+                                    <button
+                                        ref={el => { if(el) dockRefs.current.set(app.id, el); else dockRefs.current.delete(app.id); }}
+                                        onClick={(e) => {
+                                            app.toggle();
+                                        }}
+                                        className={`
+                                            w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
+                                            ${app.isOpen ? 'bg-black/10 dark:bg-white/10 shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-black/10 dark:hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
+                                        `}
+                                    >
+                                        {/* Icon Rendering */}
+                                        {app.id === 'settings' ? (
+                                            <div className={`transition-transform duration-[3s] ease-linear ${app.isOpen ? 'rotate-[120deg]' : ''}`}>
+                                                <app.icon size={26} className="text-gray-700 dark:text-white drop-shadow-md" strokeWidth={1.5} />
+                                            </div>
+                                        ) : (
+                                            <div className={`w-10 h-10 bg-gradient-to-br ${app.gradient || app.color} rounded-xl flex items-center justify-center text-white shadow-lg`}>
+                                                <app.icon size={20} className="text-white drop-shadow-md" />
+                                            </div>
+                                        )}
+                                    </button>
+                                    {/* Active Dot */}
+                                    <div className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-gray-800 dark:bg-white rounded-full transition-all duration-300 ${app.isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
+                                    
+                                    {/* Tooltip */}
+                                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 dark:border-white/10 shadow-sm">
+                                        {app.name}
+                                    </div>
+                                </div>
+                            </motion.div>
+                        );
+                    })}
+                    </AnimatePresence>
                 </div>
-                <div className="flex items-center gap-2 text-white/80 ml-1" onClick={(e) => e.stopPropagation()}>
-                    <button className="hover:text-white" onClick={prevSong}><SkipBack size={14} fill="currentColor" /></button>
-                    <button className="hover:text-white" onClick={togglePlay}>
-                    {isPlaying ? <div className="w-2.5 h-2.5 bg-white rounded-[1px]" /> : <Play size={14} fill="currentColor" />}
-                    </button>
-                    <button className="hover:text-white" onClick={nextSong}><SkipForward size={14} fill="currentColor" /></button>
+
+                <div className="flex-1" />
+
+                <div 
+                    ref={musicDockRef}
+                    onContextMenu={(e) => handleContextMenu(e, 'music')}
+                    onClick={toggleMusicApp}
+                    className="hidden lg:flex items-center gap-3 px-3 py-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer mr-2"
+                >
+                    <div className={`w-9 h-9 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative flex items-center justify-center`}>
+                        <motion.div 
+                            className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-800 dark:to-black flex items-center justify-center"
+                            animate={{ rotate: isPlaying ? 360 : 0 }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                        >
+                        <div className="w-3 h-3 rounded-full border-[3px] border-white/30 dark:border-white/10" />
+                        <div className="absolute inset-0 rounded-lg border border-black/5 dark:border-white/5" />
+                        </motion.div>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-700 dark:text-white/80 ml-1" onClick={(e) => e.stopPropagation()}>
+                        <button className="hover:text-black dark:hover:text-white" onClick={prevSong}><SkipBack size={14} fill="currentColor" /></button>
+                        <button className="hover:text-black dark:hover:text-white" onClick={togglePlay}>
+                        {isPlaying ? <div className="w-2.5 h-2.5 bg-current rounded-[1px]" /> : <Play size={14} fill="currentColor" className="ml-1" />}
+                        </button>
+                        <button className="hover:text-black dark:hover:text-white" onClick={nextSong}><SkipForward size={14} fill="currentColor" /></button>
+                    </div>
+                </div>
+
+                <div className="w-[1px] h-8 bg-black/10 dark:bg-white/10 mx-2" />
+
+                <div className="flex items-center gap-4 text-gray-600 dark:text-white/60 px-4">
+                <Wifi size={18} className={!useSystem().isWifiEnabled ? 'opacity-30' : ''} />
+                <Volume2 size={18} />
+                <Battery size={18} />
                 </div>
             </div>
-
-            <div className="w-[1px] h-8 bg-white/10 mx-2" />
-
-            <div className="flex items-center gap-4 text-white/60 px-4">
-               <Wifi size={18} />
-               <Volume2 size={18} />
-               <Battery size={18} />
-            </div>
-         </div>
-      </div>
+        </div>
+      </motion.div>
+      )}
 
       {contextMenu && (
         <motion.div
@@ -1116,36 +1852,40 @@ export default function App() {
           exit={{ opacity: 0, scale: 0.9 }}
           transition={{ duration: 0.1 }}
           style={{ top: contextMenu.y, left: contextMenu.x }}
-          className="absolute z-[9999] w-56 bg-[#141414]/90 backdrop-blur-xl border border-white/15 rounded-lg shadow-2xl py-1.5 flex flex-col pointer-events-auto origin-top-left"
+          className="absolute z-[9999] w-56 bg-white/90 dark:bg-[#141414]/90 backdrop-blur-xl border border-black/10 dark:border-white/15 rounded-lg shadow-2xl py-1.5 flex flex-col pointer-events-auto origin-top-left"
           onClick={(e) => e.stopPropagation()}
         >
           {contextMenu.type === 'desktop' ? (
             <>
               <button 
                 onClick={changeWallpaper}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors group"
+                className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors group"
               >
                 <ImageIcon size={15} />
                 Next Wallpaper
               </button>
               <button 
                 onClick={() => { setContextMenu(null); toggleGallery(); }}
-                className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors"
+                className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors"
               >
                 <Folder size={15} />
                 Wallpaper Library
               </button>
-              <div className="h-[1px] bg-white/10 my-1.5 mx-2" />
-              <button className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+              <div className="h-[1px] bg-black/5 dark:bg-white/10 my-1.5 mx-2" />
+              <button onClick={() => { setContextMenu(null); toggleWidgetPicker(); }} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+                <Layout size={15} />
+                Add Widgets...
+              </button>
+              <button className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
                 <RefreshCw size={15} />
                 Refresh
               </button>
-              <button className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
-                <Monitor size={15} />
-                Display Settings
+              <div className="h-[1px] bg-black/5 dark:bg-white/10 my-1.5 mx-2" />
+              <button onClick={() => setLocked(true)} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+                <Lock size={15} />
+                Lock
               </button>
-              <div className="h-[1px] bg-white/10 my-1.5 mx-2" />
-              <button className="flex items-center gap-3 px-3 py-2 hover:bg-red-500/80 text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+              <button className="flex items-center gap-3 px-3 py-2 hover:bg-red-500/80 text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
                 <Power size={15} />
                 Shut down
               </button>
@@ -1155,16 +1895,16 @@ export default function App() {
                <div className="px-3 py-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Music Player</div>
                <button 
                  onClick={toggleMusicApp} 
-                 className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors"
+                 className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors"
                >
                  <Disc size={15} />
                  Open Music App
                </button>
-               <button onClick={togglePlay} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+               <button onClick={togglePlay} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
                  {isPlaying ? <div className="w-4 h-4 flex items-center justify-center"><div className="w-2 h-2 bg-current"/></div> : <Play size={15} />}
                  {isPlaying ? "Pause" : "Play"}
                </button>
-               <button onClick={nextSong} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
+               <button onClick={nextSong} className="flex items-center gap-3 px-3 py-2 hover:bg-[#3b82f6] text-gray-800 dark:text-gray-200 hover:text-white text-sm mx-1 rounded transition-colors">
                  <SkipForward size={15} />
                  Next Track
                </button>
@@ -1174,4 +1914,14 @@ export default function App() {
       )}
     </div>
   );
-}
+};
+
+const App: React.FC = () => {
+  return (
+    <SystemProvider>
+      <DesktopContent />
+    </SystemProvider>
+  );
+};
+
+export default App;

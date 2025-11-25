@@ -1,5 +1,7 @@
+
 import React, { useRef, useState } from 'react';
 import { Upload, Trash2, Image as ImageIcon, Plus } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface WallpaperAppProps {
   wallpapers: string[];
@@ -42,6 +44,21 @@ export const WallpaperApp: React.FC<WallpaperAppProps> = ({
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.03
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, scale: 0.8 },
+    show: { opacity: 1, scale: 1, transition: { type: "spring" as const, stiffness: 300, damping: 25 } }
+  };
+
   return (
     <div 
       className="w-full h-full flex flex-col relative"
@@ -73,9 +90,15 @@ export const WallpaperApp: React.FC<WallpaperAppProps> = ({
 
       {/* Grid */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 pt-0">
-        <div className="grid grid-cols-3 gap-4">
+        <motion.div 
+          className="grid grid-cols-3 gap-4"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
            {/* Add New Card (Visual alternative to button) */}
-           <button 
+           <motion.button 
+             variants={itemVariants}
              onClick={() => fileInputRef.current?.click()}
              className="aspect-video rounded-xl border-2 border-dashed border-white/10 hover:border-white/30 hover:bg-white/5 flex flex-col items-center justify-center gap-2 transition-all group"
            >
@@ -83,10 +106,11 @@ export const WallpaperApp: React.FC<WallpaperAppProps> = ({
                  <Plus size={20} className="text-gray-400 group-hover:text-white" />
               </div>
               <span className="text-xs text-gray-500 font-medium">Add New</span>
-           </button>
+           </motion.button>
 
            {wallpapers.map((src, index) => (
-             <div 
+             <motion.div 
+               variants={itemVariants}
                key={index} 
                className={`group relative aspect-video rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${index === activeIndex ? 'border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)] ring-1 ring-blue-500/50' : 'border-transparent hover:border-white/20'}`}
                onClick={() => onSelect(index)}
@@ -111,9 +135,9 @@ export const WallpaperApp: React.FC<WallpaperAppProps> = ({
                >
                  <Trash2 size={14} />
                </button>
-             </div>
+             </motion.div>
            ))}
-        </div>
+        </motion.div>
       </div>
 
       {/* Drop Overlay */}

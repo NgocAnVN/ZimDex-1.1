@@ -18,7 +18,6 @@ export const BrowserApp: React.FC = () => {
     let target = inputUrl;
     
     if (!target.startsWith('http')) {
-       // Treat as search
        target = `https://www.bing.com/search?q=${encodeURIComponent(target)}`;
     }
     
@@ -38,52 +37,52 @@ export const BrowserApp: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#1e1e24]/90 backdrop-blur-xl text-gray-200 font-sans overflow-hidden rounded-b-xl">
+    <div className="w-full h-full flex flex-col bg-gray-50/95 dark:bg-[#1e1e24]/90 backdrop-blur-xl text-gray-800 dark:text-gray-200 font-sans overflow-hidden rounded-b-xl transition-colors duration-300">
       {/* Tabs Strip */}
-      <div className="h-10 bg-[#0a0a0c]/80 flex items-end px-2 gap-1 pt-2 select-none drag-handle">
+      <div className="h-10 bg-gray-200/80 dark:bg-[#0a0a0c]/80 flex items-end px-2 gap-1 pt-2 select-none drag-handle transition-colors">
          {tabs.map(tab => (
              <div 
                 key={tab.id}
                 className={`
                    group relative flex items-center gap-2 px-3 py-1.5 rounded-t-lg text-xs max-w-[200px] flex-1 cursor-default transition-colors
-                   ${tab.active ? 'bg-[#2a2e35]/90 text-white' : 'bg-transparent text-gray-500 hover:bg-[#1a1d21]/50 hover:text-gray-300'}
+                   ${tab.active ? 'bg-white dark:bg-[#2a2e35]/90 text-gray-900 dark:text-white shadow-sm' : 'bg-transparent text-gray-600 dark:text-gray-500 hover:bg-gray-300/50 dark:hover:bg-[#1a1d21]/50 hover:text-gray-800 dark:hover:text-gray-300'}
                 `}
              >
                 <tab.icon size={12} />
                 <span className="truncate">{tab.title}</span>
-                <button className="ml-auto p-0.5 rounded-md hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all">
+                <button className="ml-auto p-0.5 rounded-md hover:bg-black/10 dark:hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-all">
                     <X size={10} />
                 </button>
              </div>
          ))}
-         <button className="p-1.5 text-gray-500 hover:text-white hover:bg-white/10 rounded-md ml-1 transition-colors">
+         <button className="p-1.5 text-gray-500 hover:text-black dark:hover:text-white hover:bg-black/10 dark:hover:bg-white/10 rounded-md ml-1 transition-colors">
              <Plus size={14} />
          </button>
       </div>
 
       {/* Navigation Bar */}
-      <div className="h-12 bg-[#2a2e35]/90 flex items-center px-4 gap-3 border-b border-white/5 shadow-sm z-10">
-          <div className="flex items-center gap-1 text-gray-400">
-             <button className="p-1.5 rounded-full hover:bg-white/5 hover:text-white transition-colors disabled:opacity-30"><ArrowLeft size={16} /></button>
-             <button className="p-1.5 rounded-full hover:bg-white/5 hover:text-white transition-colors disabled:opacity-30"><ArrowRight size={16} /></button>
-             <button onClick={handleRefresh} className="p-1.5 rounded-full hover:bg-white/5 hover:text-white transition-colors">
+      <div className="h-12 bg-white dark:bg-[#2a2e35]/90 flex items-center px-4 gap-3 border-b border-gray-200 dark:border-white/5 shadow-sm z-10 transition-colors">
+          <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+             <button className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-colors disabled:opacity-30"><ArrowLeft size={16} /></button>
+             <button className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-colors disabled:opacity-30"><ArrowRight size={16} /></button>
+             <button onClick={handleRefresh} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-colors">
                  <RotateCw size={16} className={isLoading ? "animate-spin" : ""} />
              </button>
-             <button onClick={() => setUrl('https://www.bing.com')} className="p-1.5 rounded-full hover:bg-white/5 hover:text-white transition-colors"><Home size={16} /></button>
+             <button onClick={() => setUrl('https://www.bing.com')} className="p-1.5 rounded-full hover:bg-black/5 dark:hover:bg-white/5 hover:text-black dark:hover:text-white transition-colors"><Home size={16} /></button>
           </div>
 
           {/* Omnibox */}
           <form onSubmit={handleNavigate} className="flex-1">
-             <div className="bg-[#15171a] border border-white/10 rounded-full h-8 flex items-center px-3 text-sm focus-within:border-blue-500/50 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.1)] transition-all">
-                <Lock size={12} className="text-green-500 mr-2" />
+             <div className="bg-gray-100 dark:bg-[#15171a] border border-gray-300 dark:border-white/10 rounded-full h-8 flex items-center px-3 text-sm focus-within:border-blue-500/50 focus-within:shadow-[0_0_0_2px_rgba(59,130,246,0.1)] transition-all">
+                <Lock size={12} className="text-green-600 dark:text-green-500 mr-2" />
                 <input 
                   type="text" 
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  className="flex-1 bg-transparent outline-none text-gray-200 placeholder-gray-600"
+                  className="flex-1 bg-transparent outline-none text-gray-900 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-600"
                   placeholder="Search or enter website name"
                 />
-                <button type="button" className="text-gray-500 hover:text-yellow-400 transition-colors"><Star size={14} /></button>
+                <button type="button" className="text-gray-400 hover:text-yellow-500 transition-colors"><Star size={14} /></button>
              </div>
           </form>
 

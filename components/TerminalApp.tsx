@@ -9,6 +9,9 @@ interface TerminalAppProps {
   onInstallAmeOS: () => void;
   onOpenImageGen: () => void;
   onOpenVideoGen: () => void;
+  onOpenPho: () => void;
+  onDeleteFileExplorer: () => void;
+  onOpenUninstallTool: () => void;
 }
 
 interface HistoryItem {
@@ -16,7 +19,10 @@ interface HistoryItem {
   content: string;
 }
 
-export const TerminalApp: React.FC<TerminalAppProps> = ({ onUnlockSecret, onOpenBrowser, onOpenSnake, onInstallAmeOS, onOpenImageGen, onOpenVideoGen }) => {
+export const TerminalApp: React.FC<TerminalAppProps> = ({ 
+    onUnlockSecret, onOpenBrowser, onOpenSnake, onInstallAmeOS, 
+    onOpenImageGen, onOpenVideoGen, onOpenPho, onDeleteFileExplorer, onOpenUninstallTool
+}) => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([
     { type: 'output', content: 'ZimDex OS [Version 10.0.25398.1]' },
@@ -68,8 +74,16 @@ export const TerminalApp: React.FC<TerminalAppProps> = ({ onUnlockSecret, onOpen
   const handleCommand = async (cmd: string) => {
     const trimmedCmd = cmd.trim();
     addToHistory(cmd, 'input');
+    setInput('');
 
     if (trimmedCmd === '') return;
+
+    // --- New Command: Uninstall-tool== ---
+    if (trimmedCmd === 'Uninstall-tool==') {
+        addToHistory('Launching Uninstaller Tool v1.0...');
+        onOpenUninstallTool();
+        return;
+    }
 
     // Easter Egg: Install AmeOS
     if (trimmedCmd === 'install AmeOS') {
@@ -78,7 +92,7 @@ export const TerminalApp: React.FC<TerminalAppProps> = ({ onUnlockSecret, onOpen
     }
     
     // Easter Egg: Self Destruct
-    if (trimmedCmd === 'rm -rf --no-preserve-root /') {
+    if (trimmedCmd === 'kill-system') {
         setIsLocked(true);
         const crashSequence = [
             "rm: removing '/'",
@@ -94,165 +108,131 @@ export const TerminalApp: React.FC<TerminalAppProps> = ({ onUnlockSecret, onOpen
             "rm: removing '/run'",
             "rm: removing '/sbin'",
             "rm: removing '/sys'",
+            "rm: removing '/tmp'",
             "rm: removing '/usr'",
             "rm: removing '/var'",
-            "rm: cannot remove '/proc/1/fd/0': Operation not permitted",
-            "rm: cannot remove '/sys/kernel/security': Operation not permitted",
-            "FAILED TO WRITE LOG: Disk quota exceeded",
-            "CRITICAL PROCESS DIED: init",
-            "Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000000",
-            "CPU: 0 PID: 1 Comm: rm Not tainted 6.6.6-zimdex #1",
-            "Call Trace:",
-            " <TASK>",
-            " panic+0x140/0x2a0",
-            " do_exit+0x300/0xa00",
-            "Rebooting in 3 seconds..."
+            "rm: cannot remove '/sys/firmware/efi/efivars': Operation not permitted",
+            "KERNEL PANIC: Init not found. Try passing init= option to kernel."
         ];
 
-        for (const line of crashSequence) {
-             await new Promise(r => setTimeout(r, Math.random() * 100 + 50));
-             addToHistory(line);
+        for (let i = 0; i < crashSequence.length; i++) {
+             await new Promise(r => setTimeout(r, 300));
+             addToHistory(crashSequence[i]);
         }
-        
-        await new Promise(r => setTimeout(r, 3000));
-        onInstallAmeOS(); // Reusing the crash handler which triggers the boot loop
         return;
     }
 
-    // Secret Code: Liminal AI (Text)
-    if (trimmedCmd === 'ZImAI==') {
-       addToHistory('authenticating hash...');
-       addToHistory('verifying encryption keys...');
-       addToHistory('ACCESS GRANTED. WELCOME, ADMINISTRATOR.');
-       addToHistory('INITIALIZING LIMINAL PROTOCOL...');
-       
-       setTimeout(() => {
-         onUnlockSecret();
-         addToHistory('[SUCCESS] Liminal UI loaded.');
-       }, 1500);
-       return;
-    }
-    
-    // Secret Code: Liminal Visualizer (Image)
-    if (trimmedCmd === 'ZimAI-Image==') {
-       addToHistory('initializing visual cortex...');
-       addToHistory('allocating gpu resources...');
-       addToHistory('connecting to Gemini Vision...');
-       addToHistory('LOADING LIMINAL VISUALIZER...');
-       
-       setTimeout(() => {
-         onOpenImageGen();
-         addToHistory('[SUCCESS] Visualizer active.');
-       }, 1500);
-       return;
+    // Application Launchers
+    if (trimmedCmd === 'liminal') {
+        onUnlockSecret();
+        addToHistory('Accessing Liminal Protocol...');
+        return;
     }
 
-    // Secret Code: Liminal Video (Veo)
-    if (trimmedCmd === 'ZimAI-Video==') {
-        addToHistory('initializing temporal engine...');
-        addToHistory('connecting to Veo-3.1 model...');
-        addToHistory('LOADING LIMINAL VIDEO...');
-        
-        setTimeout(() => {
-          onOpenVideoGen();
-          addToHistory('[SUCCESS] Motion Engine active.');
-        }, 1500);
+    if (trimmedCmd === 'browser' || trimmedCmd === 'start chrome') {
+        onOpenBrowser();
+        addToHistory('Launching Browser...');
         return;
-     }
+    }
 
-    // Secret Code: Browser
-    if (trimmedCmd === 'ZimBr==') {
-        addToHistory('resolving proxy chains...');
-        addToHistory('OPENING SECURE BROWSER...');
-        
-        setTimeout(() => {
-          onOpenBrowser();
-          addToHistory('[SUCCESS] Browser active.');
-        }, 1000);
+    if (trimmedCmd === 'snake' || trimmedCmd === 'game') {
+        onOpenSnake();
+        addToHistory('Launching Snake...');
         return;
-     }
+    }
 
-     // Secret Code: Snake Game
-    if (trimmedCmd === 'ZImGame==') {
-        addToHistory('loading arcade assets...');
-        addToHistory('STARTING SNAKE...');
-        
-        setTimeout(() => {
-          onOpenSnake();
-          addToHistory('[SUCCESS] Game Running.');
-        }, 1000);
+    if (trimmedCmd === 'pho' || trimmedCmd === 'cook') {
+        onOpenPho();
+        addToHistory('Opening Pho Anh Hai...');
         return;
-     }
+    }
 
-    switch (trimmedCmd.toLowerCase()) {
-      case 'help':
-        addToHistory('Available commands:');
-        addToHistory('  help           - Show this help message');
-        addToHistory('  clear          - Clear terminal screen');
-        addToHistory('  whoami         - Display current user');
-        addToHistory('  install [pkg]  - Install software packages');
-        addToHistory('  date           - Display current system date');
-        break;
-      case 'clear':
+    if (trimmedCmd === 'imagine' || trimmedCmd === 'gen-img') {
+        onOpenImageGen();
+        addToHistory('Initializing Visualizer...');
+        return;
+    }
+
+    if (trimmedCmd === 'animate' || trimmedCmd === 'gen-video') {
+        onOpenVideoGen();
+        addToHistory('Initializing Motion Engine...');
+        return;
+    }
+
+    // Basic Commands
+    if (trimmedCmd === 'help') {
+        const helpText = [
+            'Available Commands:',
+            '  help              - Show this help message',
+            '  cls / clear       - Clear the screen',
+            '  date              - Display current date',
+            '  whoami            - Display current user',
+            '  liminal           - Access hidden AI layer',
+            '  browser           - Launch Web Browser',
+            '  snake             - Play Snake',
+            '  pho               - Play Pho Anh Hai',
+            '  imagine           - Launch AI Image Generator',
+            '  animate           - Launch AI Video Generator',
+            '  install AmeOS     - System Upgrade',
+            '  Uninstall-tool==  - Remove system applications'
+        ];
+        helpText.forEach(line => addToHistory(line));
+        return;
+    }
+
+    if (trimmedCmd === 'cls' || trimmedCmd === 'clear') {
         setHistory([]);
-        break;
-      case 'whoami':
-        addToHistory('guest@zimdex-os');
-        break;
-      case 'date':
-        addToHistory(new Date().toString());
-        break;
-      default:
-        if (trimmedCmd.startsWith('echo ')) {
-            addToHistory(trimmedCmd.substring(5));
-        } else if (trimmedCmd.startsWith('install ')) {
-            addToHistory(`Error: Package '${trimmedCmd.substring(8)}' not found in standard repositories.`);
-        } else {
-            addToHistory(`Command not found: ${trimmedCmd}`);
-        }
+        return;
     }
+
+    if (trimmedCmd === 'date') {
+        addToHistory(new Date().toString());
+        return;
+    }
+
+    if (trimmedCmd === 'whoami') {
+        addToHistory('zimdex\\admin');
+        return;
+    }
+
+    addToHistory(`'${trimmedCmd}' is not recognized as an internal or external command, operable program or batch file.`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLocked) {
-      handleCommand(input);
-      setInput('');
+    if (e.key === 'Enter') {
+        handleCommand(input);
     }
   };
 
   return (
     <div 
-      className="w-full h-full bg-[#0c0c0c]/90 backdrop-blur-md text-green-500 font-mono p-4 text-sm overflow-hidden flex flex-col"
-      onClick={() => !isLocked && inputRef.current?.focus()}
+        className="w-full h-full bg-black text-gray-300 font-mono text-sm p-4 overflow-hidden flex flex-col"
+        onClick={() => inputRef.current?.focus()}
     >
-      <div className="flex-1 overflow-y-auto custom-scrollbar" ref={containerRef}>
-        {history.map((item, i) => (
-          <div key={i} className={`mb-1 ${item.type === 'input' ? 'text-white' : 'text-green-400'}`}>
-            {item.type === 'input' && <span className="text-green-600 mr-2">guest@zimdex:~$</span>}
-            <span className="whitespace-pre-wrap break-words">{item.content}</span>
-          </div>
-        ))}
-        
-        {!isLocked && (
-            <div className="flex items-center">
-            <span className="text-green-600 mr-2 shrink-0">guest@zimdex:~$</span>
-            <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="bg-transparent border-none outline-none flex-1 text-white caret-white"
-                autoComplete="off"
-                autoCapitalize="off"
-                spellCheck="false"
-            />
-            </div>
-        )}
-        {isLocked && (
-            <div className="mt-2 animate-pulse text-green-400">_</div>
-        )}
-      </div>
+        <div ref={containerRef} className="flex-1 overflow-y-auto custom-scrollbar">
+            {history.map((item, index) => (
+                <div key={index} className={`${item.type === 'input' ? 'mt-2' : ''}`}>
+                    {item.type === 'input' && <span className="text-green-500 mr-2">C:\Users\NgocAnn&gt;</span>}
+                    <span>{item.content}</span>
+                </div>
+            ))}
+            
+            {!isLocked && (
+                <div className="mt-2 flex items-center">
+                    <span className="text-green-500 mr-2">C:\Users\NgocAnn&gt;</span>
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        className="flex-1 bg-transparent outline-none text-gray-300 caret-gray-300"
+                        autoComplete="off"
+                        autoFocus
+                    />
+                </div>
+            )}
+        </div>
     </div>
   );
 };
