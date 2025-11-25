@@ -13,9 +13,7 @@
     "lucide-react": "^0.554.0",
     "react-dom": "^19.2.0",
     "framer-motion": "^12.23.24",
-    "@google/genai": "^1.30.0",
-    "@vitejs/plugin-react": "^5.1.1",
-    "vite": "^7.2.4"
+    "@google/genai": "^1.30.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
