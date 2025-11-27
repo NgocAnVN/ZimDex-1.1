@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { 
   Search, Power, Settings, User, FileText, Image, Music, Video, 
   Mail, Calendar, Map, Terminal, Calculator, Folder, ArrowRight,
-  Lock, Grid, Cpu, Zap, Wifi, Monitor, Utensils, StickyNote, Layout
+  Lock, Grid, Cpu, Zap, Wifi, Monitor, StickyNote, Layout
 } from 'lucide-react';
 import { useSystem } from '../contexts/SystemContext';
 
@@ -19,7 +19,6 @@ interface StartMenuProps {
   onOpenMonitor: () => void;
   onOpenMail: () => void;
   onOpenMusic: () => void;
-  onOpenPho: () => void;
   onOpenCalculator: () => void;
   onOpenNote: () => void;
   anchorX: number;
@@ -28,10 +27,10 @@ interface StartMenuProps {
 export const StartMenu: React.FC<StartMenuProps> = ({ 
   onClose, onOpenSettings, onOpenGallery, onOpenRecorder, 
   onOpenTerminal, onOpenBrowser, onOpenFiles, onOpenMonitor, 
-  onOpenMail, onOpenMusic, onOpenPho, onOpenCalculator, onOpenNote, anchorX 
+  onOpenMail, onOpenMusic, onOpenCalculator, onOpenNote, anchorX 
 }) => {
   const [searchValue, setSearchValue] = useState('');
-  const { username, isTransparencyEnabled, accentColor, avatar } = useSystem();
+  const { username, isTransparencyEnabled, accentColor, avatar, systemFont } = useSystem();
 
   const systemWidgets = [
     { label: 'CPU', value: '32%', icon: Cpu, color: 'text-blue-500 dark:text-blue-400', bg: 'bg-blue-100 dark:bg-blue-500/20' },
@@ -52,7 +51,6 @@ export const StartMenu: React.FC<StartMenuProps> = ({
     { name: 'Mail', icon: Mail, action: onOpenMail, color: 'from-blue-500 to-blue-400' },
     { name: 'Diary', icon: StickyNote, action: onOpenNote, color: 'from-amber-400 to-yellow-500' },
     { name: 'Calculator', icon: Calculator, action: onOpenCalculator, color: 'from-orange-500 to-yellow-500' },
-    { name: 'Pho', icon: Utensils, action: onOpenPho, color: 'from-orange-600 to-red-500' },
   ];
 
   return (
@@ -77,7 +75,9 @@ export const StartMenu: React.FC<StartMenuProps> = ({
                        {avatar ? (
                            <img src={avatar} alt="User Avatar" className="w-full h-full object-cover" />
                        ) : (
-                           <User size={16} className="text-black dark:text-white" />
+                           <span className="text-sm font-bold text-gray-800 dark:text-white" style={{ fontFamily: systemFont }}>
+                               {username.charAt(0).toUpperCase()}
+                           </span>
                        )}
                    </div>
                 </div>

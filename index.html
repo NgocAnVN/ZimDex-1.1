@@ -4,6 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZimDex OS</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -18,7 +20,10 @@
         }
       }
     </script>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Patrick+Hand&display=swap" rel="stylesheet">
+    
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -26,68 +31,100 @@
         background-color: #000;
         margin: 0;
       }
-      /* Only hide cursor when the app is actually running and the CustomCursor is active */
       body.custom-cursor-active * {
         cursor: none !important;
       }
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
       
-      /* Custom Scrollbar for the OS feel */
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-      }
-
-      /* Loading Screen Styles */
       #loading-screen {
-        position: fixed;
-        inset: 0;
-        background: #000;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #333;
-        z-index: 9999;
+        position: fixed; inset: 0; background: #000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #333; z-index: 9999; transition: opacity 0.5s ease-out;
       }
       .loading-spinner {
-        width: 40px;
-        height: 40px;
-        border: 3px solid rgba(255,255,255,0.1);
-        border-radius: 50%;
-        border-top-color: #3b82f6;
-        animation: spin 1s ease-in-out infinite;
-        margin-bottom: 16px;
+        width: 40px; height: 40px;
+        border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: #3b82f6;
+        animation: spin 1s ease-in-out infinite; margin-bottom: 16px;
       }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
+      @keyframes spin { to { transform: rotate(360deg); } }
     </style>
-    <script>
-      // Essential Shim for GitHub Pages / Browser environments
-      if (typeof window !== 'undefined') {
-        window.process = window.process || {};
-        window.process.env = window.process.env || {};
-        window.process.env.NODE_ENV = 'production';
+
+    <!-- SystemJS & Babel for in-browser TSX compilation -->
+    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/system.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/systemjs@6.14.3/dist/extras/amd.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="systemjs-importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@18.2.0?dev",
+          "react/": "https://esm.sh/react@18.2.0/",
+          "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?dev",
+          "framer-motion": "https://esm.sh/framer-motion@10.16.4?dev",
+          "lucide-react": "https://esm.sh/lucide-react@0.263.1?dev",
+          "@google/genai": "https://esm.sh/@google/genai@0.1.1?dev"
+        }
       }
+    </script>
+
+    <script>
+      // 1. Configure Babel transformation
+      const transformTSX = (source, url) => {
+        try {
+          return Babel.transform(source, {
+            filename: url,
+            presets: [
+              ['react', { runtime: 'automatic' }],
+              'typescript'
+            ],
+            sourceMaps: 'inline'
+          }).code;
+        } catch (e) {
+          console.error("Babel transform error:", e);
+          return source;
+        }
+      };
+
+      // 2. Hook into SystemJS fetch to intercept .tsx/.ts files
+      const originalFetch = System.constructor.prototype.fetch;
+      System.constructor.prototype.fetch = function (url, options) {
+        return originalFetch(url, options).then(res => {
+          if (url.endsWith('.tsx') || url.endsWith('.ts')) {
+            return res.text().then(source => {
+              const transpiled = transformTSX(source, url);
+              return new Response(transpiled, { status: 200, headers: { 'Content-Type': 'application/javascript' } });
+            });
+          }
+          return res;
+        });
+      };
+
+      // 3. Hook into SystemJS resolve to automatically append extensions
+      const originalResolve = System.constructor.prototype.resolve;
+      System.constructor.prototype.resolve = function (id, parentUrl) {
+        // If it's a local import (starts with .) and has no extension
+        if (id.startsWith('.') && !id.match(/\.(js|css|json|ts|tsx)$/)) {
+          // Heuristic: if it looks like a type file, try .ts, otherwise .tsx
+          if (id.endsWith('types')) {
+            return originalResolve.call(this, id + '.ts', parentUrl);
+          }
+          return originalResolve.call(this, id + '.tsx', parentUrl);
+        }
+        return originalResolve.call(this, id, parentUrl);
+      };
     </script>
   <script type="importmap">
 {
   "imports": {
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
     "react": "https://aistudiocdn.com/react@^19.2.0",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
     "react-dom": "https://aistudiocdn.com/react-dom@^19.2.0",
-    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-    "vite": "https://aistudiocdn.com/vite@^7.2.4"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "framer-motion": "https://aistudiocdn.com/framer-motion@^12.23.24"
   }
 }
 </script>
@@ -99,6 +136,16 @@
         <div style="font-family: monospace; color: #888; font-size: 14px;">INITIALIZING SYSTEM...</div>
       </div>
     </div>
-    <script type="module" src="./index.tsx"></script>
+    
+    <script>
+      // Start the app
+      System.import('./index.tsx').catch(console.error);
+      
+      // Remove loading screen when app mounts (simple timeout fallback)
+      setTimeout(() => {
+        const screen = document.getElementById('loading-screen');
+        if (screen) screen.style.display = 'none';
+      }, 3000); 
+    </script>
   </body>
 </html>

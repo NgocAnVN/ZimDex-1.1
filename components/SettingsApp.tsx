@@ -275,7 +275,9 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                            {system.avatar ? (
                                <img src={system.avatar} alt="User Avatar" className="w-full h-full object-cover" />
                            ) : (
-                               <User size={40} className="text-gray-400 dark:text-gray-300" />
+                               <span className="text-4xl font-bold text-gray-500 dark:text-gray-400" style={{ fontFamily: system.systemFont }}>
+                                   {system.username.charAt(0).toUpperCase()}
+                               </span>
                            )}
                            
                            {/* Overlay for upload hint */}

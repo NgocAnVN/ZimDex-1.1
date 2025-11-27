@@ -94,11 +94,11 @@ export const LockScreen: React.FC = () => {
                                     className="w-full h-full rounded-full object-cover shadow-inner"
                                 />
                             ) : (
-                                <img 
-                                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200" 
-                                    alt="User" 
-                                    className="w-full h-full rounded-full object-cover shadow-inner"
-                                />
+                                <div className="w-full h-full rounded-full bg-black/20 flex items-center justify-center">
+                                     <span className="text-5xl font-bold text-white" style={{ fontFamily: systemFont }}>
+                                         {username.charAt(0).toUpperCase()}
+                                     </span>
+                                </div>
                             )}
                         </div>
                         

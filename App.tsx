@@ -16,7 +16,6 @@ import { SnakeGameApp } from './components/SnakeGameApp';
 import { FileExplorerApp } from './components/FileExplorerApp';
 import { MonitorApp } from './components/MonitorApp';
 import { MailApp } from './components/MailApp';
-import { PhoAnhHaiApp } from './components/PhoAnhHaiApp';
 import { TaskManager } from './components/TaskManager';
 import { UninstallApp } from './components/UninstallApp';
 import { CalculatorApp } from './components/CalculatorApp';
@@ -31,7 +30,7 @@ import {
   Settings, Wifi, Volume2, Battery, Power, Monitor, Image as ImageIcon, 
   RefreshCw, Disc, Folder, ArrowLeft, Wrench, Terminal, 
   RotateCcw, Cpu, HardDrive, Pause, Play, SkipBack, SkipForward, Trash2, Lock,
-  Globe, Gamepad2, Utensils, Sparkles, Film, Music, Video, Mail, Calculator, StickyNote, Shield, Layout
+  Globe, Gamepad2, Sparkles, Film, Music, Video, Mail, Calculator, StickyNote, Shield, Layout
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FileSystemNode, WidgetInstance, WidgetType, WidgetStyle } from './types'; 
@@ -507,8 +506,43 @@ const AmeOSBootScreen = ({ onRecover, onInstallHiddenOS }: { onRecover: () => vo
   );
 };
 
+const WelcomePopup = ({ onClose }: { onClose: () => void }) => (
+  <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <motion.div 
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center text-white"
+    >
+      <div className="mb-6">
+        <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/30">
+           <Lock size={32} />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Welcome to ZimDex OS</h2>
+        <p className="text-white/70 text-sm">System initialized and ready.</p>
+      </div>
+      
+      <div className="bg-black/30 rounded-lg p-4 mb-6 border border-white/10">
+         <div className="text-xs text-white/50 uppercase tracking-widest mb-1">Default Password</div>
+         <div className="text-2xl font-mono font-bold tracking-widest text-blue-400">1234</div>
+      </div>
+
+      <p className="text-xs text-white/40 mb-6">
+        Copyright © 2025 <span className="text-white font-bold">Ngoc Ann</span>. All rights reserved.
+      </p>
+
+      <button 
+        onClick={onClose}
+        className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg hover:shadow-blue-500/20"
+      >
+        Enter System
+      </button>
+    </motion.div>
+  </div>
+);
+
 const DesktopContent: React.FC = () => {
   const { brightness, isNightLight, setLocked, isLocked, animationSpeed, animationType, theme, isTransparencyEnabled, systemFont } = useSystem();
+  const [showWelcome, setShowWelcome] = useState(true);
   
   // System Status
   const [systemMode, setSystemMode] = useState<'normal' | 'ame_virus' | 'ame_install' | 'ame_desktop' | 'ame_crash' | 'win10_installer_window' | 'win10_boot' | 'win10_env'>('normal');
@@ -563,7 +597,6 @@ const DesktopContent: React.FC = () => {
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [isMonitorOpen, setIsMonitorOpen] = useState(false);
   const [isMailOpen, setIsMailOpen] = useState(false);
-  const [isPhoOpen, setIsPhoOpen] = useState(false);
   const [isStartMenuOpen, setIsStartMenuOpen] = useState(false);
   const [isUninstallOpen, setIsUninstallOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -642,7 +675,6 @@ const DesktopContent: React.FC = () => {
   const [filesPosition, setFilesPosition] = useState({ x: 0, y: 0 });
   const [monitorPosition, setMonitorPosition] = useState({ x: 0, y: 0 });
   const [mailPosition, setMailPosition] = useState({ x: 0, y: 0 });
-  const [phoPosition, setPhoPosition] = useState({ x: 0, y: 0 });
   const [uninstallPosition, setUninstallPosition] = useState({ x: 0, y: 0 });
   const [calculatorPosition, setCalculatorPosition] = useState({ x: 0, y: 0 });
   const [notePosition, setNotePosition] = useState({ x: 0, y: 0 });
@@ -764,11 +796,6 @@ const DesktopContent: React.FC = () => {
       else openWindow('mail', setIsMailOpen);
   }
 
-  const togglePho = () => {
-      if (isPhoOpen) setIsPhoOpen(false);
-      else openWindow('pho', setIsPhoOpen);
-  }
-
   const toggleUninstall = () => {
       if (isUninstallOpen) setIsUninstallOpen(false);
       else openWindow('uninstall', setIsUninstallOpen);
@@ -802,7 +829,6 @@ const DesktopContent: React.FC = () => {
     { id: 'mail', name: 'Mail', isOpen: isMailOpen, toggle: toggleMail, icon: Mail, pinned: false, color: 'bg-blue-400', gradient: 'from-blue-500 to-blue-400' },
     { id: 'note', name: 'Diary', isOpen: isNoteOpen, toggle: toggleNote, icon: StickyNote, pinned: false, color: 'bg-amber-400', gradient: 'from-amber-400 to-yellow-500' },
     { id: 'calculator', name: 'Calculator', isOpen: isCalculatorOpen, toggle: toggleCalculator, icon: Calculator, pinned: true, color: 'bg-orange-500', gradient: 'from-orange-500 to-amber-500' },
-    { id: 'pho', name: 'Pho', isOpen: isPhoOpen, toggle: togglePho, icon: Utensils, pinned: false, color: 'bg-orange-500', gradient: 'from-orange-600 to-red-500' },
     { id: 'snake', name: 'Snake', isOpen: isSnakeOpen, toggle: toggleSnake, icon: Gamepad2, pinned: false, color: 'bg-green-500', gradient: 'from-green-500 to-emerald-600' },
     { id: 'ai', name: 'Liminal AI', isOpen: isAIOpen, toggle: toggleLiminalAI, icon: Sparkles, pinned: false, color: 'bg-purple-500', gradient: 'from-purple-600 to-fuchsia-600' },
     { id: 'imageGen', name: 'Visualizer', isOpen: isImageGenOpen, toggle: toggleImageGen, icon: ImageIcon, pinned: false, color: 'bg-cyan-500', gradient: 'from-cyan-600 to-blue-600' },
@@ -810,7 +836,7 @@ const DesktopContent: React.FC = () => {
     { id: 'uninstall', name: 'Uninstall Tool', isOpen: isUninstallOpen, toggle: toggleUninstall, icon: Trash2, pinned: false, color: 'bg-red-700', gradient: 'from-red-700 to-red-900' },
   ], [
     isSettingsOpen, isBrowserOpen, isGalleryOpen, isFilesOpen, isTerminalOpen,
-    isMusicOpen, isRecorderOpen, isMonitorOpen, isMailOpen, isPhoOpen, isCalculatorOpen, isNoteOpen,
+    isMusicOpen, isRecorderOpen, isMonitorOpen, isMailOpen, isCalculatorOpen, isNoteOpen,
     isSnakeOpen, isAIOpen, isImageGenOpen, isVideoGenOpen, isUninstallOpen
   ]);
 
@@ -880,7 +906,6 @@ const DesktopContent: React.FC = () => {
       setFilesPosition({ x: centerX, y: centerY });
       setMonitorPosition({ x: centerX, y: centerY });
       setMailPosition({ x: centerX, y: centerY });
-      setPhoPosition({ x: centerX, y: centerY });
       setUninstallPosition({ x: centerX, y: centerY });
       setCalculatorPosition({ x: centerX + 100, y: centerY + 50 });
       setNotePosition({ x: centerX + 80, y: centerY + 40 });
@@ -1040,7 +1065,6 @@ const DesktopContent: React.FC = () => {
       setIsFilesOpen(false);
       setIsMonitorOpen(false);
       setIsMailOpen(false);
-      setIsPhoOpen(false);
       setIsStartMenuOpen(false);
       setIsUninstallOpen(false);
       setIsCalculatorOpen(false);
@@ -1147,6 +1171,11 @@ const DesktopContent: React.FC = () => {
       onContextMenu={(e) => handleContextMenu(e, 'desktop')}
     >
       
+      {/* Startup Popup */}
+      <AnimatePresence>
+        {showWelcome && <WelcomePopup onClose={() => setShowWelcome(false)} />}
+      </AnimatePresence>
+
       {/* UAC Modal - Redesigned */}
       <AnimatePresence>
         {showUAC && (
@@ -1294,7 +1323,6 @@ const DesktopContent: React.FC = () => {
                     onOpenMonitor={toggleMonitor}
                     onOpenMail={toggleMail}
                     onOpenMusic={toggleMusicApp}
-                    onOpenPho={togglePho}
                     onOpenCalculator={toggleCalculator}
                     onOpenNote={toggleNote}
                     anchorX={startMenuX}
@@ -1411,7 +1439,7 @@ const DesktopContent: React.FC = () => {
                 </OSWindow>
             )}
 
-            {/* ... (Other windows like Gallery, Recorder, Terminal, Browser, Files, Monitor, Mail, Calculator, Note, AI, ImageGen, VideoGen, Pho, Uninstall, and OpenFiles remain identical) ... */}
+            {/* ... (Other windows like Gallery, Recorder, Terminal, Browser, Files, Monitor, Mail, Calculator, Note, AI, ImageGen, VideoGen, Uninstall, and OpenFiles remain identical) ... */}
             
             {isGalleryOpen && (
                 <OSWindow
@@ -1472,11 +1500,10 @@ const DesktopContent: React.FC = () => {
                     <TerminalApp 
                     onUnlockSecret={() => openWindow('ai', setIsAIOpen)} 
                     onOpenBrowser={() => openWindow('browser', setIsBrowserOpen)} 
-                    onOpenSnake={() => openWindow('pho', setIsPhoOpen)}
+                    onOpenSnake={() => openWindow('snake', setIsSnakeOpen)}
                     onInstallAmeOS={handleInstallAmeOS}
                     onOpenImageGen={() => openWindow('imageGen', setIsImageGenOpen)}
                     onOpenVideoGen={() => openWindow('videoGen', setIsVideoGenOpen)}
-                    onOpenPho={() => openWindow('pho', setIsPhoOpen)}
                     onDeleteFileExplorer={handleCrashExplorer}
                     onOpenUninstallTool={() => openWindow('uninstall', setIsUninstallOpen)}
                     />
@@ -1648,24 +1675,6 @@ const DesktopContent: React.FC = () => {
                     dragConstraints={constraintsRef}
                 >
                     <LiminalVideoApp />
-                </OSWindow>
-            )}
-
-            {isPhoOpen && (
-                <OSWindow
-                    key="pho-window"
-                    isOpen={isPhoOpen}
-                    onClose={togglePho}
-                    title="Pho Anh Hai"
-                    isActive={isActive('pho')}
-                    zIndex={getZIndex('pho')}
-                    onFocus={() => focusWindow('pho')}
-                    launchOrigin={terminalPosition}
-                    initialPosition={phoPosition}
-                    onDragEnd={(pos) => setPhoPosition(pos)}
-                    dragConstraints={constraintsRef}
-                >
-                    <PhoAnhHaiApp />
                 </OSWindow>
             )}
             

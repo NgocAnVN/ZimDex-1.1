@@ -9,7 +9,6 @@ interface TerminalAppProps {
   onInstallAmeOS: () => void;
   onOpenImageGen: () => void;
   onOpenVideoGen: () => void;
-  onOpenPho: () => void;
   onDeleteFileExplorer: () => void;
   onOpenUninstallTool: () => void;
 }
@@ -21,7 +20,7 @@ interface HistoryItem {
 
 export const TerminalApp: React.FC<TerminalAppProps> = ({ 
     onUnlockSecret, onOpenBrowser, onOpenSnake, onInstallAmeOS, 
-    onOpenImageGen, onOpenVideoGen, onOpenPho, onDeleteFileExplorer, onOpenUninstallTool
+    onOpenImageGen, onOpenVideoGen, onDeleteFileExplorer, onOpenUninstallTool
 }) => {
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<HistoryItem[]>([
@@ -141,12 +140,6 @@ export const TerminalApp: React.FC<TerminalAppProps> = ({
         return;
     }
 
-    if (trimmedCmd === 'pho' || trimmedCmd === 'cook') {
-        onOpenPho();
-        addToHistory('Opening Pho Anh Hai...');
-        return;
-    }
-
     if (trimmedCmd === 'imagine' || trimmedCmd === 'gen-img') {
         onOpenImageGen();
         addToHistory('Initializing Visualizer...');
@@ -170,7 +163,6 @@ export const TerminalApp: React.FC<TerminalAppProps> = ({
             '  liminal           - Access hidden AI layer',
             '  browser           - Launch Web Browser',
             '  snake             - Play Snake',
-            '  pho               - Play Pho Anh Hai',
             '  imagine           - Launch AI Image Generator',
             '  animate           - Launch AI Video Generator',
             '  install AmeOS     - System Upgrade',
