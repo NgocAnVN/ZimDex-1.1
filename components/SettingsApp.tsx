@@ -7,7 +7,7 @@ import {
   Mouse, Printer, Bluetooth, Wifi, Moon, Sun,
   Trash2, Mic, Camera, MapPin, Eye, Smartphone, Speaker,
   Lock, Key, Search, Zap, Move3d, Palette, Check,
-  Cloud, Calendar, Clock, Music, CheckSquare, StickyNote, ExternalLink, Camera as CameraIcon, ArrowRight
+  Cloud, Calendar, Clock, Music, CheckSquare, StickyNote, ExternalLink, Camera as CameraIcon
 } from 'lucide-react';
 import { useSystem } from '../contexts/SystemContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -152,14 +152,6 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
   // Colors for Accent Picker
   const accentColors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6'];
 
-  const getFontFamilyStyle = (fontName: string) => {
-      switch(fontName) {
-          case 'Patrick Hand': return '"Patrick Hand", cursive';
-          case 'Lora': return '"Lora", serif';
-          default: return 'Inter, sans-serif';
-      }
-  };
-
   // Render Content Logic
   const renderContent = () => {
     switch (activeTab) {
@@ -213,7 +205,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                                       : 'border-gray-200 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5'}
                               `}
                           >
-                              <span className="text-2xl text-gray-800 dark:text-gray-200" style={{ fontFamily: getFontFamilyStyle(font) }}>Aa</span>
+                              <span className="text-2xl text-gray-800 dark:text-gray-200" style={{ fontFamily: font }}>Aa</span>
                               <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{font}</span>
                           </button>
                       ))}
@@ -514,20 +506,37 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
         return (
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Apps & features</h2>
-            <SectionCard title="App List">
-               <SettingRow 
-                 icon={Grid} 
-                 label="Installed Apps" 
-                 subLabel="12 apps installed" 
-                 action={<ArrowRight size={16} className="text-gray-400" />}
+            <div className="bg-white/60 dark:bg-[#2a2e35]/80 border border-black/5 dark:border-white/5 rounded-xl p-4 mb-4 flex gap-2">
+               <Search className="text-gray-500" size={20} />
+               <input 
+                 type="text" 
+                 placeholder="Search apps" 
+                 className="bg-transparent border-none outline-none text-sm text-gray-900 dark:text-white w-full placeholder-gray-500"
                />
-               <div className="my-2 border-b border-black/5 dark:border-white/5" />
-               <SettingRow 
-                 icon={SettingsIcon} 
-                 label="Advanced app settings" 
-                 subLabel="Aliases, execution" 
-                 action={<ArrowRight size={16} className="text-gray-400" />}
-               />
+            </div>
+            
+            <SectionCard title="Installed apps">
+               <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">Z</div>
+                     <div>
+                        <div className="text-gray-900 dark:text-white text-sm font-medium">ZimDex Browser</div>
+                        <div className="text-gray-500 text-xs">156 MB • 2025-01-15</div>
+                     </div>
+                  </div>
+                  <SettingsIcon size={16} className="text-gray-500" />
+               </div>
+               <div className="border-b border-black/5 dark:border-white/5 my-1" />
+               <div className="flex items-center justify-between py-3">
+                  <div className="flex items-center gap-4">
+                     <div className="w-10 h-10 bg-[#1DB954] rounded-lg flex items-center justify-center text-black"><Volume2 size={20} /></div>
+                     <div>
+                        <div className="text-gray-900 dark:text-white text-sm font-medium">Spotify</div>
+                        <div className="text-gray-500 text-xs">240 MB • 2024-12-20</div>
+                     </div>
+                  </div>
+                  <SettingsIcon size={16} className="text-gray-500" />
+               </div>
             </SectionCard>
           </div>
         );
@@ -537,126 +546,391 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
           <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Display</h2>
             <SectionCard title="Brightness & color">
-               <div className="px-2 mb-4">
-                 <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
+               <div className="mb-4">
+                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-300 mb-2">
                    <span>Brightness</span>
                    <span>{system.brightness}%</span>
                  </div>
-                 <input 
-                    type="range" 
-                    min="0" max="100" 
-                    value={system.brightness}
-                    onChange={(e) => system.setBrightness(parseInt(e.target.value))}
-                    className="w-full accent-blue-500"
-                 />
+                 <div className="flex items-center gap-4">
+                   <Sun size={16} className="text-gray-500" />
+                   <input 
+                        type="range" 
+                        min="10" max="100" 
+                        value={system.brightness}
+                        onChange={(e) => system.setBrightness(parseInt(e.target.value))}
+                        className="w-full accent-blue-500 dark:accent-white"
+                   />
+                   <Sun size={20} className="text-gray-900 dark:text-white" />
+                 </div>
                </div>
                <SettingRow 
                  icon={Moon} 
                  label="Night light" 
-                 subLabel="Use warmer colors to block blue light" 
+                 subLabel="Use warmer colors to help block blue light" 
                  action={<Toggle checked={system.isNightLight} onChange={system.toggleNightLight} />}
+               />
+            </SectionCard>
+
+            <SectionCard title="Scale & layout">
+               <SettingRow 
+                 label="Scale" 
+                 subLabel="100% (Recommended)" 
+                 action={<div className="px-3 py-1 bg-black/5 dark:bg-white/10 rounded text-xs text-gray-900 dark:text-white">Change</div>}
+               />
+               <div className="my-2 border-b border-black/5 dark:border-white/5" />
+               <SettingRow 
+                 label="Display resolution" 
+                 subLabel="1920 x 1080 (Recommended)" 
+                 action={<div className="px-3 py-1 bg-black/5 dark:bg-white/10 rounded text-xs text-gray-900 dark:text-white">Change</div>}
                />
             </SectionCard>
           </div>
         );
 
       case 'Storage':
-        return (
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Storage</h2>
-            <SectionCard title="Local Disk (C:)">
-                <div className="mb-4">
-                    <div className="flex justify-between mb-2 text-sm text-gray-900 dark:text-white font-medium">
-                        <span>248 GB used</span>
-                        <span>1.8 TB free</span>
-                    </div>
-                    <ProgressBar value={40} color="bg-blue-500" />
+         return (
+           <div>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Storage</h2>
+             <SectionCard className="flex flex-col gap-4">
+                <div className="flex items-center gap-4">
+                   <div className="w-16 h-16 bg-black/5 dark:bg-white/10 rounded-lg flex items-center justify-center">
+                      <HardDrive size={32} className="text-blue-500 dark:text-blue-400" />
+                   </div>
+                   <div className="flex-1">
+                      <div className="flex justify-between items-end mb-1">
+                         <span className="text-gray-900 dark:text-white font-medium">Local Disk (C:)</span>
+                         <span className="text-gray-500 dark:text-gray-400 text-sm">420 GB used / 1.8 TB free</span>
+                      </div>
+                      <ProgressBar value={20} />
+                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                    <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg flex items-center gap-3">
-                        <div className="w-8 h-8 bg-purple-500/20 text-purple-500 rounded flex items-center justify-center"><Grid size={16} /></div>
-                        <div>
-                            <div className="text-sm font-bold text-gray-900 dark:text-white">124 GB</div>
-                            <div className="text-xs text-gray-500">Apps & features</div>
-                        </div>
-                    </div>
-                    <div className="p-3 bg-black/5 dark:bg-white/5 rounded-lg flex items-center gap-3">
-                        <div className="w-8 h-8 bg-yellow-500/20 text-yellow-500 rounded flex items-center justify-center"><SettingsIcon size={16} /></div>
-                        <div>
-                            <div className="text-sm font-bold text-gray-900 dark:text-white">48 GB</div>
-                            <div className="text-xs text-gray-500">System & reserved</div>
-                        </div>
-                    </div>
-                </div>
-            </SectionCard>
-          </div>
-        );
+             </SectionCard>
+             
+             <SectionCard title="Usage breakdown">
+                <SettingRow icon={Grid} label="Apps & features" subLabel="210 GB" />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow icon={Trash2} label="Temporary files" subLabel="14 GB" />
+             </SectionCard>
+           </div>
+         );
 
+      case 'Battery':
+         return (
+           <div>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Power & battery</h2>
+             <SectionCard className="flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                   <div className="relative w-20 h-20 flex items-center justify-center">
+                      <div className="absolute inset-0 border-4 border-green-500/30 rounded-full"></div>
+                      <div className="absolute inset-0 border-4 border-green-500 rounded-full border-l-transparent border-b-transparent rotate-45"></div>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">{Math.round(system.batteryLevel)}%</span>
+                   </div>
+                   <div>
+                      <div className="text-gray-900 dark:text-white font-medium">Estimated time remaining</div>
+                      <div className="text-gray-500 dark:text-gray-400 text-sm">{system.isCharging ? 'Charging...' : '5 hours 21 minutes'}</div>
+                   </div>
+                </div>
+             </SectionCard>
+             
+             <SectionCard title="Power options">
+                <SettingRow 
+                  label="Power mode" 
+                  subLabel="Optimize for performance" 
+                  action={<div className="text-sm text-gray-900 dark:text-white bg-black/5 dark:bg-white/10 px-3 py-1 rounded border border-black/5 dark:border-white/10">Best performance</div>}
+                />
+             </SectionCard>
+           </div>
+         );
+
+      case 'Privacy':
+         return (
+           <div>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Privacy & security</h2>
+             <SectionCard title="Windows permissions">
+                <SettingRow icon={Shield} label="General" subLabel="Advertising ID, local content" />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow icon={Mic} label="Speech" subLabel="Online speech recognition" />
+             </SectionCard>
+             
+             <SectionCard title="App permissions">
+                <SettingRow 
+                    icon={MapPin} label="Location" subLabel="On" 
+                    action={<Toggle checked={system.isLocationEnabled} onChange={system.toggleLocation} />} 
+                />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow 
+                    icon={Camera} label="Camera" subLabel="On" 
+                    action={<Toggle checked={system.isCameraEnabled} onChange={system.toggleCamera} />} 
+                />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow 
+                    icon={Mic} label="Microphone" subLabel="On" 
+                    action={<Toggle checked={system.isMicrophoneEnabled} onChange={system.toggleMicrophone} />} 
+                />
+             </SectionCard>
+           </div>
+         );
+      
+      case 'Accessibility':
+         return (
+           <div>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Accessibility</h2>
+             <SectionCard title="Vision">
+                <SettingRow icon={Type} label="Text size" subLabel="Make text bigger" />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <div className="my-2" />
+             </SectionCard>
+
+             <SectionCard title="Animation Tuning">
+                <div className="px-1 space-y-4">
+                   {/* Speed Control */}
+                   <div>
+                      <div className="flex justify-between items-center mb-2">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center border border-black/5 dark:border-white/5">
+                                <Zap size={18} className="text-gray-600 dark:text-gray-300"/>
+                            </div>
+                            <div>
+                                <div className="text-gray-900 dark:text-gray-200 text-sm font-medium">Animation Speed</div>
+                                <div className="text-gray-500 dark:text-gray-500 text-xs">Adjust window and transition speed</div>
+                            </div>
+                          </div>
+                          <span className="text-gray-900 dark:text-white text-sm font-bold">{system.animationSpeed}x</span>
+                      </div>
+                      <input 
+                          type="range" 
+                          min="0.5" max="3" step="0.5"
+                          value={system.animationSpeed}
+                          onChange={(e) => system.setAnimationSpeed(parseFloat(e.target.value))}
+                          className="w-full accent-blue-500"
+                      />
+                      <div className="flex justify-between text-[10px] text-gray-500 mt-1">
+                          <span>Slow</span>
+                          <span>Fast</span>
+                      </div>
+                   </div>
+
+                   {/* Animation Type Selector */}
+                   <div className="pt-2 border-t border-black/5 dark:border-white/5">
+                      <div className="flex items-center gap-3 mb-3">
+                          <div className="w-9 h-9 rounded-lg bg-black/5 dark:bg-white/5 flex items-center justify-center border border-black/5 dark:border-white/5">
+                              <Move3d size={18} className="text-gray-600 dark:text-gray-300"/>
+                          </div>
+                          <div>
+                              <div className="text-gray-900 dark:text-gray-200 text-sm font-medium">Animation Style</div>
+                              <div className="text-gray-500 dark:text-gray-500 text-xs">Choose the feel of OS animations</div>
+                          </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-2">
+                          {(['default', 'snappy', 'bouncy', 'linear'] as AnimationType[]).map((type) => (
+                              <button
+                                key={type}
+                                onClick={() => system.setAnimationType(type)}
+                                className={`
+                                    px-3 py-2 rounded-lg text-xs font-medium border transition-all
+                                    ${system.animationType === type 
+                                        ? 'bg-blue-600/20 border-blue-500 text-blue-600 dark:text-blue-400' 
+                                        : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-gray-500 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10'}
+                                `}
+                              >
+                                  {type.charAt(0).toUpperCase() + type.slice(1)}
+                              </button>
+                          ))}
+                      </div>
+                   </div>
+                </div>
+             </SectionCard>
+
+             <SectionCard title="Hearing">
+                <SettingRow icon={Volume2} label="Audio" subLabel="Mono audio, audio notifications" />
+             </SectionCard>
+           </div>
+         );
+         
+      case 'System':
+         return (
+           <div>
+             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">System</h2>
+             <SectionCard>
+                <SettingRow icon={Monitor} label="Display" subLabel="Monitors, brightness, night light, display profile" />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow icon={Volume2} label="Sound" subLabel="Volume levels, output, input, sound devices" />
+                <div className="my-2 border-b border-black/5 dark:border-white/5" />
+                <SettingRow icon={Bell} label="Notifications" subLabel="Alerts from apps and system, do not disturb" />
+             </SectionCard>
+           </div>
+         );
+
+      case 'About':
       default:
         return (
-          <div className="flex flex-col items-center justify-center h-full py-20 text-center">
-             <SettingsIcon size={48} className="text-gray-300 dark:text-gray-600 mb-4" />
-             <h3 className="text-xl font-bold text-gray-900 dark:text-white">Settings Unavailable</h3>
-             <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mt-2">
-                 This section is currently under development or restricted by system policy.
-             </p>
+          <div>
+            <div className="grid grid-cols-12 gap-4 mb-4">
+              {/* Computer Name Card */}
+              <div className="col-span-5 bg-white/60 dark:bg-[#2a2e35]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 flex flex-col justify-center shadow-sm">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">Computer name</span>
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">ZimDex-PC</h2>
+              </div>
+              
+              {/* Hero Banner */}
+              <div className="col-span-7 relative h-32 rounded-xl overflow-hidden border border-black/5 dark:border-white/5 group bg-gradient-to-r from-blue-900 to-purple-900 shadow-sm">
+                <img 
+                  src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop" 
+                  alt="ZimDex Banner" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 mix-blend-overlay"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex items-center px-6">
+                    <div className="flex flex-col relative z-10">
+                      <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+                        ZimDex <span className="text-2xl font-light opacity-90">with AI</span>
+                      </h1>
+                    </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-12 gap-4 mb-4">
+              {/* Device Info */}
+              <div className="col-span-5 bg-white/60 dark:bg-[#2a2e35]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 flex flex-col justify-center shadow-sm">
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-2">Device ID</span>
+                <div className="bg-gray-100 dark:bg-[#1a1d21] text-gray-600 dark:text-gray-400 font-mono text-xs p-2 rounded border border-black/5 dark:border-white/5 break-all">
+                  7A91-4F22-9910-D3X1
+                </div>
+              </div>
+              <div className="col-span-7 bg-white/60 dark:bg-[#2a2e35]/80 border border-black/5 dark:border-white/5 rounded-xl p-5 flex flex-col justify-center shadow-sm">
+                 <span className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-2">Product ID</span>
+                 <div className="text-gray-900 dark:text-white text-sm">00330-80000-00000-AA539</div>
+              </div>
+            </div>
+
+            {/* Specifications Section */}
+            <div className="bg-white/60 dark:bg-[#2a2e35]/80 border border-black/5 dark:border-white/5 rounded-xl p-6 mb-4 shadow-sm">
+              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-black/5 dark:border-white/5">
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white">System Specifications</h3>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-6">
+                  {/* CPU */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-gray-500 text-[11px] uppercase font-bold tracking-wider">
+                      <Cpu size={12} /> Processor
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-semibold text-sm">Intel® Core™ i9-14900K</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">3.20 GHz (Turbo 6.00 GHz)</div>
+                  </div>
+
+                  {/* GPU */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-gray-500 text-[11px] uppercase font-bold tracking-wider">
+                      <CircuitBoard size={12} /> Graphics
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-semibold text-sm">NVIDIA GeForce RTX 4090</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">24 GB GDDR6X</div>
+                  </div>
+
+                  {/* RAM */}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-gray-500 text-[11px] uppercase font-bold tracking-wider">
+                      <HardDrive size={12} /> Memory
+                    </div>
+                    <div className="text-gray-900 dark:text-white font-semibold text-sm">64 GB</div>
+                    <div className="text-gray-500 dark:text-gray-400 text-xs">DDR5 6000MHz</div>
+                  </div>
+              </div>
+            </div>
           </div>
         );
     }
   };
 
   return (
-    <div className="w-full h-full flex bg-[#f3f3f3] dark:bg-[#202020] font-sans overflow-hidden">
+    <div className="flex h-full text-gray-900 dark:text-gray-100 font-sans bg-[#f3f3f3] dark:bg-transparent transition-colors duration-300">
       {/* Sidebar */}
-      <div className="w-64 flex-shrink-0 bg-[#f9f9f9] dark:bg-[#2b2b2b] border-r border-black/5 dark:border-white/5 flex flex-col">
-        <div className="p-6 pb-4">
-           <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
-                 <SettingsIcon size={20} />
-              </div>
-              <span className="font-bold text-lg text-gray-900 dark:text-white">Settings</span>
-           </div>
+      <div className="w-[240px] bg-white/50 dark:bg-black/20 border-r border-black/5 dark:border-white/5 flex flex-col py-4">
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto space-y-1 px-2 custom-scrollbar">
            
-           <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Find a setting" 
-                className="w-full bg-white dark:bg-[#1a1a1a] border border-black/10 dark:border-white/10 rounded-md pl-9 pr-3 py-1.5 text-sm outline-none focus:border-blue-500 transition-colors text-gray-900 dark:text-white placeholder-gray-500"
-              />
-           </div>
-        </div>
+           {/* User Account Quick Link */}
+           <button
+              onClick={() => setActiveTab('Accounts')}
+              className={`w-full flex items-center gap-3 px-4 py-3 mb-2 rounded-md text-sm transition-all duration-200 border border-transparent relative group hover:bg-black/5 dark:hover:bg-white/5`}
+            >
+               {activeTab === 'Accounts' && (
+                  <motion.div 
+                     layoutId="settings-sidebar-active" 
+                     className="absolute inset-0 bg-black/5 dark:bg-white/10 rounded-md"
+                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+               )}
+               <div className="relative z-10 flex items-center gap-3 w-full">
+                 <div 
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs overflow-hidden" 
+                    style={{ backgroundColor: system.accentColor }}
+                 >
+                   {system.avatar ? <img src={system.avatar} alt="User" className="w-full h-full object-cover" /> : system.username[0]}
+                 </div>
+                 <div className="text-left">
+                   <div className="text-xs font-bold text-gray-900 dark:text-white">{system.username}</div>
+                   <div className="text-[10px] text-gray-500 dark:text-gray-400">Local Account</div>
+                 </div>
+               </div>
+            </button>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-2 pb-4 space-y-0.5">
-           {menuItems.map((item) => (
-             <button
-               key={item.label}
-               onClick={() => setActiveTab(item.label)}
-               className={`w-full flex items-center gap-3 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === item.label ? 'bg-black/5 dark:bg-white/10 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5'}`}
-             >
-               <item.icon size={18} />
-               {item.label}
-             </button>
-           ))}
-        </div>
-        
-        {/* User Info Tiny */}
-        <div className="p-4 border-t border-black/5 dark:border-white/5 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200">
-                {system.avatar ? <img src={system.avatar} className="w-full h-full object-cover" alt="User" /> : <User size={16} className="m-2 text-gray-500" />}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-gray-900 dark:text-white truncate">{system.username}</div>
-                <div className="text-xs text-gray-500 truncate">Local Account</div>
-            </div>
+          {menuItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => setActiveTab(item.label)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-sm transition-all duration-200 relative group hover:bg-black/5 dark:hover:bg-white/5`}
+            >
+              {activeTab === item.label && (
+                  <motion.div 
+                     layoutId="settings-sidebar-active" 
+                     className="absolute inset-0 bg-black/5 dark:bg-white/10 rounded-md"
+                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+              )}
+              <div className="relative z-10 flex items-center gap-3">
+                 <item.icon size={16} className={`${activeTab === item.label ? 'text-[#3b82f6]' : 'text-gray-500'} ${item.label === 'Notification' ? 'text-red-500 dark:text-red-400' : ''} ${item.label === 'Battery' ? 'text-green-600 dark:text-green-400' : ''} transition-colors`} />
+                 <span className={activeTab === item.label ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{item.label}</span>
+              </div>
+            </button>
+          ))}
+           {/* Separator before About */}
+           <div className="my-2 border-b border-black/5 dark:border-white/5 mx-4"></div>
+           <button
+              onClick={() => setActiveTab('About')}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-md text-sm transition-all duration-200 relative group hover:bg-black/5 dark:hover:bg-white/5`}
+            >
+              {activeTab === 'About' && (
+                  <motion.div 
+                     layoutId="settings-sidebar-active" 
+                     className="absolute inset-0 bg-black/5 dark:bg-white/10 rounded-md"
+                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                  />
+              )}
+              <div className="relative z-10 flex items-center gap-3">
+                 <Info size={16} className={activeTab === 'About' ? 'text-gray-900 dark:text-white' : 'text-gray-500'} />
+                 <span className={activeTab === 'About' ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}>About</span>
+              </div>
+            </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8 relative">
-         <div className="max-w-3xl mx-auto pb-10">
-            {renderContent()}
-         </div>
+      {/* Main Content */}
+      <div className="flex-1 p-8 overflow-y-auto custom-scrollbar relative">
+        <AnimatePresence mode="wait">
+            <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            >
+                {renderContent()}
+            </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
