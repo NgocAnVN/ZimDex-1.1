@@ -349,7 +349,7 @@ const WidgetCard: React.FC<{
       animate="visible"
       whileHover="hover"
       whileTap="tap"
-      className={`absolute group ${className}`}
+      className={`absolute group pointer-events-auto ${className}`}
       style={{ 
         width, 
         height, 
@@ -370,14 +370,14 @@ const WidgetCard: React.FC<{
       >
           {/* Drag Handle / Header - Floats above content */}
           <div 
-            className={`absolute top-0 left-0 right-0 h-8 z-30 flex justify-end items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move`}
+            className={`absolute top-0 left-0 right-0 h-8 z-30 flex justify-end items-center px-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-move pointer-events-auto`}
             style={{ transform: 'translateZ(30px)' }}
           >
              <button 
                 onClick={onRemove} 
                 onPointerDown={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
-                className="p-1 rounded-full transition-colors mr-auto ml-2 bg-black/20 hover:bg-red-500 text-white border border-white/10 shadow-lg"
+                className="p-1 rounded-full transition-colors mr-auto ml-2 bg-black/20 hover:bg-red-500 text-white border border-white/10 shadow-lg pointer-events-auto"
              >
                 <X size={12} />
              </button>

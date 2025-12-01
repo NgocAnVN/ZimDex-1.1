@@ -7,7 +7,7 @@ import {
   Mouse, Printer, Bluetooth, Wifi, Moon, Sun,
   Trash2, Mic, Camera, MapPin, Eye, Smartphone, Speaker,
   Lock, Key, Search, Zap, Move3d, Palette, Check,
-  Cloud, Calendar, Clock, Music, CheckSquare, StickyNote, ExternalLink, Camera as CameraIcon
+  Cloud, Calendar, Clock, Music, CheckSquare, StickyNote, ExternalLink, Camera as CameraIcon, Plus
 } from 'lucide-react';
 import { useSystem } from '../contexts/SystemContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -53,8 +53,12 @@ const SettingRow: React.FC<{
   </div>
 );
 
-const Toggle: React.FC<{ checked: boolean; onChange: () => void }> = ({ checked, onChange }) => (
-  <button onClick={onChange} className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${checked ? 'bg-[#3b82f6]' : 'bg-gray-300 dark:bg-gray-600'}`}>
+const Toggle: React.FC<{ checked: boolean; onChange: () => void; activeColor?: string }> = ({ checked, onChange, activeColor = '#3b82f6' }) => (
+  <button 
+    onClick={onChange} 
+    className={`w-10 h-5 rounded-full relative transition-colors duration-200 ${!checked ? 'bg-gray-300 dark:bg-gray-600' : ''}`}
+    style={{ backgroundColor: checked ? activeColor : undefined }}
+  >
     <motion.div 
       layout 
       className={`absolute top-1 w-3 h-3 bg-white rounded-full ${checked ? 'left-6' : 'left-1'}`} 
@@ -63,10 +67,11 @@ const Toggle: React.FC<{ checked: boolean; onChange: () => void }> = ({ checked,
   </button>
 );
 
-const ProgressBar: React.FC<{ value: number; color?: string }> = ({ value, color = "bg-blue-500" }) => (
+const ProgressBar: React.FC<{ value: number; color?: string }> = ({ value, color = "#3b82f6" }) => (
   <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
     <motion.div 
-      className={`h-full ${color}`} 
+      className="h-full" 
+      style={{ backgroundColor: color }}
       initial={{ width: 0 }}
       animate={{ width: `${value}%` }}
       transition={{ duration: 0.8, ease: "easeOut" }}
@@ -84,6 +89,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
   const [activeTab, setActiveTab] = useState('Personalization');
   const system = useSystem();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const colorInputRef = useRef<HTMLInputElement>(null);
 
   // Local state for password change flow
   const [oldPass, setOldPass] = useState('');
@@ -220,7 +226,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                      action={
                         <button 
                             onClick={onOpenWidgetPicker}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium rounded shadow-sm transition-colors"
+                            className="flex items-center gap-2 px-3 py-1.5 hover:opacity-90 text-white text-xs font-medium rounded shadow-sm transition-colors"
+                            style={{ backgroundColor: system.accentColor }}
                         >
                             Open Gallery <ExternalLink size={12} />
                         </button>
@@ -237,7 +244,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                                 <div className="text-gray-500 dark:text-gray-500 text-xs">Choose your system accent color</div>
                             </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 items-center">
                             {accentColors.map(color => (
                                 <button
                                     key={color}
@@ -246,6 +253,23 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                                     style={{ backgroundColor: color }}
                                 />
                             ))}
+                            {/* Custom Color Picker */}
+                            <div className="relative">
+                                <button 
+                                    onClick={() => colorInputRef.current?.click()}
+                                    className="w-6 h-6 rounded-full border-2 border-transparent bg-gradient-to-tr from-white to-black flex items-center justify-center shadow-sm hover:scale-110 transition-transform"
+                                    title="Custom Color"
+                                >
+                                    <Plus size={12} className="text-white mix-blend-difference" />
+                                </button>
+                                <input 
+                                    ref={colorInputRef}
+                                    type="color" 
+                                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                                    value={system.accentColor}
+                                    onChange={(e) => system.setAccentColor(e.target.value)}
+                                />
+                            </div>
                         </div>
                    </div>
                    <div className="my-2 border-b border-black/5 dark:border-white/5" />
@@ -253,7 +277,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                      icon={Layout}
                      label="Transparency effects"
                      subLabel="Windows and surfaces appear translucent"
-                     action={<Toggle checked={system.isTransparencyEnabled} onChange={system.toggleTransparency} />} 
+                     action={<Toggle checked={system.isTransparencyEnabled} onChange={system.toggleTransparency} activeColor={system.accentColor} />} 
                    />
                </SectionCard>
             </div>
@@ -298,7 +322,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                       <p className="text-gray-500 dark:text-gray-400 text-sm">Administrator • Local Account</p>
                       <button 
                         onClick={() => fileInputRef.current?.click()}
-                        className="text-xs text-blue-600 dark:text-blue-400 mt-1 hover:underline font-medium"
+                        className="text-xs mt-1 hover:underline font-medium"
+                        style={{ color: system.accentColor }}
                       >
                         Change profile picture
                       </button>
@@ -308,7 +333,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                <SectionCard title="Sign-in options">
                   <div className="p-4 bg-black/5 dark:bg-white/5 rounded-lg border border-black/5 dark:border-white/10">
                       <div className="flex items-center gap-3 mb-4">
-                          <Key size={20} className="text-blue-500 dark:text-blue-400" />
+                          <Key size={20} className="dark:text-white" style={{ color: system.accentColor }} />
                           <span className="text-gray-900 dark:text-white font-medium">Password</span>
                       </div>
                       
@@ -343,7 +368,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
 
                           <button 
                              onClick={handlePasswordChange}
-                             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-sm font-medium transition-colors"
+                             className="px-4 py-2 text-white rounded text-sm font-medium transition-colors hover:opacity-90"
+                             style={{ backgroundColor: system.accentColor }}
                           >
                               Change Password
                           </button>
@@ -356,7 +382,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                      icon={Lock}
                      label="Lock Screen"
                      subLabel="Automatically lock device when screen turns off"
-                     action={<Toggle checked={system.isAutoLockEnabled} onChange={system.toggleAutoLock} />} 
+                     action={<Toggle checked={system.isAutoLockEnabled} onChange={system.toggleAutoLock} activeColor={system.accentColor} />} 
                    />
                    <div className="my-2 border-b border-black/5 dark:border-white/5" />
                    <button 
@@ -378,7 +404,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                   icon={Bluetooth} 
                   label="Bluetooth" 
                   subLabel={system.isBluetoothEnabled ? "Discoverable as 'ZimDex-PC'" : "Bluetooth is off"}
-                  action={<Toggle checked={system.isBluetoothEnabled} onChange={system.toggleBluetooth} />}
+                  action={<Toggle checked={system.isBluetoothEnabled} onChange={system.toggleBluetooth} activeColor={system.accentColor} />}
                />
                <div className="mt-4 pt-4 border-t border-black/5 dark:border-white/5">
                  <button className="w-full py-2 bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-gray-900 dark:text-white border border-black/5 dark:border-white/5">
@@ -442,7 +468,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                  icon={Speaker} 
                  label="Speakers" 
                  subLabel="Realtek(R) Audio" 
-                 action={<span className="text-xs text-blue-500 dark:text-blue-400 cursor-pointer">Properties</span>}
+                 action={<span className="text-xs cursor-pointer" style={{ color: system.accentColor }}>Properties</span>}
                />
                <div className="mt-4 px-2">
                  <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -454,7 +480,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                     min="0" max="100" 
                     value={system.volume}
                     onChange={(e) => system.setVolume(parseInt(e.target.value))}
-                    className="w-full accent-blue-500"
+                    className="w-full"
+                    style={{ accentColor: system.accentColor }}
                  />
                </div>
             </SectionCard>
@@ -464,7 +491,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                  icon={Mic} 
                  label="Microphone Array" 
                  subLabel="Intel Smart Sound Technology" 
-                 action={<span className="text-xs text-blue-500 dark:text-blue-400 cursor-pointer">Properties</span>}
+                 action={<span className="text-xs cursor-pointer" style={{ color: system.accentColor }}>Properties</span>}
                />
             </SectionCard>
           </div>
@@ -479,26 +506,26 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                 icon={Bell} 
                 label="Notifications" 
                 subLabel="Get notifications from apps and other senders" 
-                action={<Toggle checked={system.isNotificationsEnabled} onChange={system.toggleNotifications} />}
+                action={<Toggle checked={system.isNotificationsEnabled} onChange={system.toggleNotifications} activeColor={system.accentColor} />}
               />
               <div className="my-2 border-b border-black/5 dark:border-white/5" />
               <SettingRow 
                 icon={Moon} 
                 label="Do not disturb" 
                 subLabel="Notifications will be sent directly to notification center" 
-                action={<Toggle checked={system.isDoNotDisturb} onChange={system.toggleDoNotDisturb} />}
+                action={<Toggle checked={system.isDoNotDisturb} onChange={system.toggleDoNotDisturb} activeColor={system.accentColor} />}
               />
             </SectionCard>
 
             <SectionCard title="Get notifications from these senders">
                <SettingRow 
                  icon={SettingsIcon} label="Settings" subLabel="Banners, Sounds" 
-                 action={<Toggle checked={system.isNotificationsEnabled} onChange={() => {}} />} 
+                 action={<Toggle checked={system.isNotificationsEnabled} onChange={() => {}} activeColor={system.accentColor} />} 
                />
                <div className="my-2 border-b border-black/5 dark:border-white/5" />
                <SettingRow 
                  icon={Grid} label="Explorer" subLabel="Banners" 
-                 action={<Toggle checked={system.isNotificationsEnabled} onChange={() => {}} />} 
+                 action={<Toggle checked={system.isNotificationsEnabled} onChange={() => {}} activeColor={system.accentColor} />} 
                />
             </SectionCard>
           </div>
@@ -520,7 +547,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
             <SectionCard title="Installed apps">
                <div className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">Z</div>
+                     <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: system.accentColor }}>Z</div>
                      <div>
                         <div className="text-gray-900 dark:text-white text-sm font-medium">ZimDex Browser</div>
                         <div className="text-gray-500 text-xs">156 MB • 2025-01-15</div>
@@ -560,7 +587,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                         min="10" max="100" 
                         value={system.brightness}
                         onChange={(e) => system.setBrightness(parseInt(e.target.value))}
-                        className="w-full accent-blue-500 dark:accent-white"
+                        className="w-full"
+                        style={{ accentColor: system.accentColor }}
                    />
                    <Sun size={20} className="text-gray-900 dark:text-white" />
                  </div>
@@ -569,7 +597,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                  icon={Moon} 
                  label="Night light" 
                  subLabel="Use warmer colors to help block blue light" 
-                 action={<Toggle checked={system.isNightLight} onChange={system.toggleNightLight} />}
+                 action={<Toggle checked={system.isNightLight} onChange={system.toggleNightLight} activeColor={system.accentColor} />}
                />
             </SectionCard>
 
@@ -596,14 +624,14 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
              <SectionCard className="flex flex-col gap-4">
                 <div className="flex items-center gap-4">
                    <div className="w-16 h-16 bg-black/5 dark:bg-white/10 rounded-lg flex items-center justify-center">
-                      <HardDrive size={32} className="text-blue-500 dark:text-blue-400" />
+                      <HardDrive size={32} style={{ color: system.accentColor }} />
                    </div>
                    <div className="flex-1">
                       <div className="flex justify-between items-end mb-1">
                          <span className="text-gray-900 dark:text-white font-medium">Local Disk (C:)</span>
                          <span className="text-gray-500 dark:text-gray-400 text-sm">420 GB used / 1.8 TB free</span>
                       </div>
-                      <ProgressBar value={20} />
+                      <ProgressBar value={20} color={system.accentColor} />
                    </div>
                 </div>
              </SectionCard>
@@ -657,17 +685,17 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
              <SectionCard title="App permissions">
                 <SettingRow 
                     icon={MapPin} label="Location" subLabel="On" 
-                    action={<Toggle checked={system.isLocationEnabled} onChange={system.toggleLocation} />} 
+                    action={<Toggle checked={system.isLocationEnabled} onChange={system.toggleLocation} activeColor={system.accentColor} />} 
                 />
                 <div className="my-2 border-b border-black/5 dark:border-white/5" />
                 <SettingRow 
                     icon={Camera} label="Camera" subLabel="On" 
-                    action={<Toggle checked={system.isCameraEnabled} onChange={system.toggleCamera} />} 
+                    action={<Toggle checked={system.isCameraEnabled} onChange={system.toggleCamera} activeColor={system.accentColor} />} 
                 />
                 <div className="my-2 border-b border-black/5 dark:border-white/5" />
                 <SettingRow 
                     icon={Mic} label="Microphone" subLabel="On" 
-                    action={<Toggle checked={system.isMicrophoneEnabled} onChange={system.toggleMicrophone} />} 
+                    action={<Toggle checked={system.isMicrophoneEnabled} onChange={system.toggleMicrophone} activeColor={system.accentColor} />} 
                 />
              </SectionCard>
            </div>
@@ -704,7 +732,8 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                           min="0.5" max="3" step="0.5"
                           value={system.animationSpeed}
                           onChange={(e) => system.setAnimationSpeed(parseFloat(e.target.value))}
-                          className="w-full accent-blue-500"
+                          className="w-full"
+                          style={{ accentColor: system.accentColor }}
                       />
                       <div className="flex justify-between text-[10px] text-gray-500 mt-1">
                           <span>Slow</span>
@@ -732,9 +761,10 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                                 className={`
                                     px-3 py-2 rounded-lg text-xs font-medium border transition-all
                                     ${system.animationType === type 
-                                        ? 'bg-blue-600/20 border-blue-500 text-blue-600 dark:text-blue-400' 
+                                        ? 'bg-blue-600/20 text-blue-600 dark:text-blue-400' 
                                         : 'bg-black/5 dark:bg-white/5 border-black/5 dark:border-white/5 text-gray-500 dark:text-gray-400 hover:bg-black/10 dark:hover:bg-white/10'}
                                 `}
+                                style={{ borderColor: system.animationType === type ? system.accentColor : undefined, color: system.animationType === type ? system.accentColor : undefined }}
                               >
                                   {type.charAt(0).toUpperCase() + type.slice(1)}
                               </button>
@@ -894,7 +924,7 @@ export const SettingsApp: React.FC<SettingsAppProps> = ({ onOpenWidgetPicker }) 
                   />
               )}
               <div className="relative z-10 flex items-center gap-3">
-                 <item.icon size={16} className={`${activeTab === item.label ? 'text-[#3b82f6]' : 'text-gray-500'} ${item.label === 'Notification' ? 'text-red-500 dark:text-red-400' : ''} ${item.label === 'Battery' ? 'text-green-600 dark:text-green-400' : ''} transition-colors`} />
+                 <item.icon size={16} className={`${activeTab === item.label ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'} ${item.label === 'Notification' ? 'text-red-500 dark:text-red-400' : ''} ${item.label === 'Battery' ? 'text-green-600 dark:text-green-400' : ''} transition-colors`} style={{ color: activeTab === item.label ? system.accentColor : undefined }} />
                  <span className={activeTab === item.label ? 'text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{item.label}</span>
               </div>
             </button>

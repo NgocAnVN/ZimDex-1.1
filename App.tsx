@@ -506,6 +506,63 @@ const AmeOSBootScreen = ({ onRecover, onInstallHiddenOS }: { onRecover: () => vo
   );
 };
 
+// Hyprland-style Top Bar Component
+const Waybar = () => {
+  const { batteryLevel, isWifiEnabled, volume, toggleWifi, accentColor } = useSystem();
+  const [time, setTime] = useState(new Date());
+  const [activeWorkspace, setActiveWorkspace] = useState(1);
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="absolute top-0 left-0 right-0 flex justify-between items-start p-3 z-[1000] pointer-events-none text-white font-sans text-xs font-medium">
+      
+      {/* Left Module: Workspaces */}
+      <div className="bg-[#1e1e2e]/90 backdrop-blur-xl border border-white/10 rounded-full py-1.5 px-2 pointer-events-auto flex items-center gap-1 shadow-2xl">
+         {[1, 2, 3, 4].map(i => (
+             <button 
+                key={i} 
+                onClick={() => setActiveWorkspace(i)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 ${activeWorkspace === i ? 'text-white font-bold shadow-lg scale-105' : 'hover:bg-white/10 text-gray-400 hover:text-white'}`}
+                style={{ backgroundColor: activeWorkspace === i ? accentColor : undefined }}
+             >
+                 {i}
+             </button>
+         ))}
+      </div>
+
+      {/* Center Module: Clock */}
+      <div className="bg-[#1e1e2e]/90 backdrop-blur-xl border border-white/10 rounded-full py-2 px-6 pointer-events-auto shadow-2xl font-bold tracking-wide hidden md:block">
+          {time.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })} 
+          <span className="mx-2 opacity-30">|</span> 
+          {time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      </div>
+
+      {/* Right Module: System Tray */}
+      <div className="bg-[#1e1e2e]/90 backdrop-blur-xl border border-white/10 rounded-full py-2 px-5 pointer-events-auto flex items-center gap-4 shadow-2xl">
+          <button onClick={toggleWifi} className="flex items-center gap-2 cursor-pointer hover:text-white transition-colors group">
+              <div className={`w-2 h-2 rounded-full ${isWifiEnabled ? 'bg-emerald-400' : 'bg-red-400'}`} />
+              <Wifi size={14} className={`text-gray-300 group-hover:text-white transition-colors`} />
+              <span className="hidden sm:inline text-gray-300 group-hover:text-white transition-colors">ZimDex</span>
+          </button>
+          <div className="w-[1px] h-3 bg-white/10" />
+          <div className="flex items-center gap-2">
+              <Volume2 size={14} className="text-blue-400" />
+              <span className="text-gray-300">{volume}%</span>
+          </div>
+          <div className="w-[1px] h-3 bg-white/10" />
+          <div className="flex items-center gap-2">
+              <Battery size={14} className={batteryLevel < 20 ? "text-red-400" : "text-emerald-400"} />
+              <span className="text-gray-300">{Math.round(batteryLevel)}%</span>
+          </div>
+      </div>
+    </div>
+  );
+};
+
 const WelcomePopup = ({ onClose }: { onClose: () => void }) => (
   <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
     <motion.div 
@@ -515,7 +572,7 @@ const WelcomePopup = ({ onClose }: { onClose: () => void }) => (
     >
       <div className="mb-6">
         <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/30">
-           <Lock size={32} />
+           <StickyNote size={32} />
         </div>
         <h2 className="text-2xl font-bold mb-2">Welcome to ZimDex OS</h2>
         <p className="text-white/70 text-sm">System initialized and ready.</p>
@@ -541,7 +598,7 @@ const WelcomePopup = ({ onClose }: { onClose: () => void }) => (
 );
 
 const DesktopContent: React.FC = () => {
-  const { brightness, isNightLight, setLocked, isLocked, animationSpeed, animationType, theme, isTransparencyEnabled, systemFont } = useSystem();
+  const { brightness, isNightLight, setLocked, isLocked, animationSpeed, animationType, theme, isTransparencyEnabled, systemFont, accentColor } = useSystem();
   const [showWelcome, setShowWelcome] = useState(true);
   
   // System Status
@@ -610,8 +667,9 @@ const DesktopContent: React.FC = () => {
     position: { x: number, y: number };
   }>>([]);
 
-  // Window Stack for Z-Indexing
+  // Window Stack for Z-Indexing and Minimization
   const [windowStack, setWindowStack] = useState<string[]>(['settings']);
+  const [minimizedWindows, setMinimizedWindows] = useState<string[]>([]);
 
   const focusWindow = (id: string) => {
     setWindowStack(prev => {
@@ -620,18 +678,46 @@ const DesktopContent: React.FC = () => {
     });
   };
 
+  const isActive = (id: string) => {
+      return windowStack.length > 0 && windowStack[windowStack.length - 1] === id;
+  };
+
+  // Helper to open a window and reset minimized state
   const openWindow = (id: string, setOpen: (v: boolean) => void) => {
       updateOrigins();
       setOpen(true);
       focusWindow(id);
+      setMinimizedWindows(prev => prev.filter(w => w !== id)); // Ensure freshly opened window is not minimized
       setIsStartMenuOpen(false);
+  };
+
+  // Helper to handle dock click (Open / Minimize / Restore)
+  const handleWindowToggle = (id: string, isOpen: boolean, setOpen: (v: boolean) => void) => {
+      if (isOpen) {
+          // If active and NOT minimized -> Minimize
+          if (isActive(id) && !minimizedWindows.includes(id)) {
+              setMinimizedWindows(prev => [...prev, id]);
+          } else {
+              // If inactive OR minimized -> Restore & Focus
+              setMinimizedWindows(prev => prev.filter(w => w !== id));
+              focusWindow(id);
+          }
+      } else {
+          openWindow(id, setOpen);
+      }
+  };
+
+  // Helper to fully close window (Unmount)
+  const handleWindowClose = (id: string, setOpen: (v: boolean) => void) => {
+      setOpen(false);
+      setMinimizedWindows(prev => prev.filter(w => w !== id));
   };
 
   const handleOpenFile = (file: FileSystemNode, onSave: (id: string, content: string) => void) => {
       // Check if already open
       const isOpen = openFiles.find(f => f.id === file.id);
       if (isOpen) {
-          focusWindow(`file-${file.id}`);
+          handleWindowToggle(`file-${file.id}`, true, () => {});
           return;
       }
 
@@ -650,15 +736,12 @@ const DesktopContent: React.FC = () => {
   const closeFileWindow = (fileId: string) => {
       setOpenFiles(prev => prev.filter(f => f.id !== fileId));
       setWindowStack(prev => prev.filter(w => w !== `file-${fileId}`));
+      setMinimizedWindows(prev => prev.filter(w => w !== `file-${fileId}`));
   };
 
   const getZIndex = (id: string) => {
       const index = windowStack.indexOf(id);
       return 50 + (index !== -1 ? index : 0);
-  };
-
-  const isActive = (id: string) => {
-      return windowStack.length > 0 && windowStack[windowStack.length - 1] === id;
   };
   
   // Window Positions
@@ -730,91 +813,24 @@ const DesktopContent: React.FC = () => {
 
   const [contextMenu, setContextMenu] = useState<{ show: boolean; x: number; y: number; type: 'desktop' | 'music' } | null>(null);
 
-  const toggleSettings = () => {
-    if (isSettingsOpen) setIsSettingsOpen(false);
-    else openWindow('settings', setIsSettingsOpen);
-  };
-
-  const toggleMusicApp = () => {
-     if (isMusicOpen) setIsMusicOpen(false);
-     else openWindow('music', setIsMusicOpen);
-     setContextMenu(null);
-  };
-
-  const toggleGallery = () => {
-     if (isGalleryOpen) setIsGalleryOpen(false);
-     else openWindow('gallery', setIsGalleryOpen);
-  };
-
-  const toggleRecorder = () => {
-     if (isRecorderOpen) setIsRecorderOpen(false);
-     else openWindow('recorder', setIsRecorderOpen);
-  }
-
-  const toggleTerminal = () => {
-      if (isTerminalOpen) setIsTerminalOpen(false);
-      else openWindow('terminal', setIsTerminalOpen);
-  }
-
-  const toggleBrowser = () => {
-     if (isBrowserOpen) setIsBrowserOpen(false);
-     else openWindow('browser', setIsBrowserOpen);
-  }
-
-  const toggleLiminalAI = () => {
-      if (isAIOpen) setIsAIOpen(false);
-      else openWindow('ai', setIsAIOpen);
-  }
-
-  const toggleImageGen = () => {
-      if (isImageGenOpen) setIsImageGenOpen(false);
-      else openWindow('imageGen', setIsImageGenOpen);
-  }
-
-  const toggleVideoGen = () => {
-      if (isVideoGenOpen) setIsVideoGenOpen(false);
-      else openWindow('videoGen', setIsVideoGenOpen);
-  }
-
-  const toggleSnake = () => {
-      if (isSnakeOpen) setIsSnakeOpen(false);
-      else openWindow('snake', setIsSnakeOpen);
-  }
-
-  const toggleFiles = () => {
-      if (isFilesOpen) setIsFilesOpen(false);
-      else openWindow('files', setIsFilesOpen);
-  }
-
-  const toggleMonitor = () => {
-      if (isMonitorOpen) setIsMonitorOpen(false);
-      else openWindow('monitor', setIsMonitorOpen);
-  }
-
-  const toggleMail = () => {
-      if (isMailOpen) setIsMailOpen(false);
-      else openWindow('mail', setIsMailOpen);
-  }
-
-  const toggleUninstall = () => {
-      if (isUninstallOpen) setIsUninstallOpen(false);
-      else openWindow('uninstall', setIsUninstallOpen);
-  }
-
-  const toggleCalculator = () => {
-      if (isCalculatorOpen) setIsCalculatorOpen(false);
-      else openWindow('calculator', setIsCalculatorOpen);
-  }
-
-  const toggleNote = () => {
-      if (isNoteOpen) setIsNoteOpen(false);
-      else openWindow('note', setIsNoteOpen);
-  }
-
-  const toggleWidgetPicker = () => {
-      if (isWidgetPickerOpen) setIsWidgetPickerOpen(false);
-      else openWindow('widgetPicker', setIsWidgetPickerOpen);
-  };
+  // Toggle Handlers using the new generic handler
+  const toggleSettings = () => handleWindowToggle('settings', isSettingsOpen, setIsSettingsOpen);
+  const toggleMusicApp = () => { handleWindowToggle('music', isMusicOpen, setIsMusicOpen); setContextMenu(null); };
+  const toggleGallery = () => handleWindowToggle('gallery', isGalleryOpen, setIsGalleryOpen);
+  const toggleRecorder = () => handleWindowToggle('recorder', isRecorderOpen, setIsRecorderOpen);
+  const toggleTerminal = () => handleWindowToggle('terminal', isTerminalOpen, setIsTerminalOpen);
+  const toggleBrowser = () => handleWindowToggle('browser', isBrowserOpen, setIsBrowserOpen);
+  const toggleLiminalAI = () => handleWindowToggle('ai', isAIOpen, setIsAIOpen);
+  const toggleImageGen = () => handleWindowToggle('imageGen', isImageGenOpen, setIsImageGenOpen);
+  const toggleVideoGen = () => handleWindowToggle('videoGen', isVideoGenOpen, setIsVideoGenOpen);
+  const toggleSnake = () => handleWindowToggle('snake', isSnakeOpen, setIsSnakeOpen);
+  const toggleFiles = () => handleWindowToggle('files', isFilesOpen, setIsFilesOpen);
+  const toggleMonitor = () => handleWindowToggle('monitor', isMonitorOpen, setIsMonitorOpen);
+  const toggleMail = () => handleWindowToggle('mail', isMailOpen, setIsMailOpen);
+  const toggleUninstall = () => handleWindowToggle('uninstall', isUninstallOpen, setIsUninstallOpen);
+  const toggleCalculator = () => handleWindowToggle('calculator', isCalculatorOpen, setIsCalculatorOpen);
+  const toggleNote = () => handleWindowToggle('note', isNoteOpen, setIsNoteOpen);
+  const toggleWidgetPicker = () => handleWindowToggle('widgetPicker', isWidgetPickerOpen, setIsWidgetPickerOpen);
 
   // App Configuration
   const allApps = useMemo(() => [
@@ -837,7 +853,8 @@ const DesktopContent: React.FC = () => {
   ], [
     isSettingsOpen, isBrowserOpen, isGalleryOpen, isFilesOpen, isTerminalOpen,
     isMusicOpen, isRecorderOpen, isMonitorOpen, isMailOpen, isCalculatorOpen, isNoteOpen,
-    isSnakeOpen, isAIOpen, isImageGenOpen, isVideoGenOpen, isUninstallOpen
+    isSnakeOpen, isAIOpen, isImageGenOpen, isVideoGenOpen, isUninstallOpen,
+    minimizedWindows, windowStack
   ]);
 
   const updateOrigins = () => {
@@ -1070,6 +1087,7 @@ const DesktopContent: React.FC = () => {
       setIsCalculatorOpen(false);
       setIsNoteOpen(false);
       setIsWidgetPickerOpen(false);
+      setMinimizedWindows([]); // Clear minimized state on full close
   };
 
   // Windows 10 Logic
@@ -1295,11 +1313,8 @@ const DesktopContent: React.FC = () => {
             <div className={`absolute inset-0 transition-colors duration-700 ${theme === 'dark' ? 'bg-black/20' : 'bg-white/5'}`} />
         </div>
 
-        <div className="absolute top-0 left-0 right-0 h-10 flex justify-between items-center px-6 z-20 pointer-events-none">
-            <div className="pointer-events-auto">
-                <Clock />
-            </div>
-        </div>
+        {/* Hyprland-style Top Bar */}
+        <Waybar />
 
         {/* Desktop Widgets Layer */}
         <DesktopWidgets 
@@ -1376,7 +1391,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow 
                 key="settings-window"
                 isOpen={isSettingsOpen} 
-                onClose={toggleSettings}
+                onClose={() => handleWindowClose('settings', setIsSettingsOpen)}
                 title="Settings"
                 isActive={isActive('settings')}
                 zIndex={getZIndex('settings')}
@@ -1385,6 +1400,7 @@ const DesktopContent: React.FC = () => {
                 initialPosition={settingsPosition}
                 onDragEnd={(pos) => setSettingsPosition(pos)}
                 dragConstraints={constraintsRef}
+                isMinimized={minimizedWindows.includes('settings')}
                 >
                 <SettingsApp onOpenWidgetPicker={toggleWidgetPicker} />
                 </OSWindow>
@@ -1394,7 +1410,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="widget-picker-window"
                     isOpen={isWidgetPickerOpen}
-                    onClose={toggleWidgetPicker}
+                    onClose={() => handleWindowClose('widgetPicker', setIsWidgetPickerOpen)}
                     title="Widget Gallery"
                     isActive={isActive('widgetPicker')}
                     zIndex={getZIndex('widgetPicker')}
@@ -1405,6 +1421,7 @@ const DesktopContent: React.FC = () => {
                     dragConstraints={constraintsRef}
                     width={920}
                     height={650}
+                    isMinimized={minimizedWindows.includes('widgetPicker')}
                 >
                     <WidgetPicker onDragStart={handleWidgetDragStart} />
                 </OSWindow>
@@ -1414,7 +1431,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="music-window"
                     isOpen={isMusicOpen}
-                    onClose={toggleMusicApp}
+                    onClose={() => handleWindowClose('music', setIsMusicOpen)}
                     title="Music Player"
                     isActive={isActive('music')}
                     zIndex={getZIndex('music')}
@@ -1423,6 +1440,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={musicPosition}
                     onDragEnd={(pos) => setMusicPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('music')}
                 >
                     <MusicApp 
                     isPlaying={isPlaying}
@@ -1439,13 +1457,11 @@ const DesktopContent: React.FC = () => {
                 </OSWindow>
             )}
 
-            {/* ... (Other windows like Gallery, Recorder, Terminal, Browser, Files, Monitor, Mail, Calculator, Note, AI, ImageGen, VideoGen, Uninstall, and OpenFiles remain identical) ... */}
-            
             {isGalleryOpen && (
                 <OSWindow
                     key="gallery-window"
                     isOpen={isGalleryOpen}
-                    onClose={toggleGallery}
+                    onClose={() => handleWindowClose('gallery', setIsGalleryOpen)}
                     title="Gallery & Wallpapers"
                     isActive={isActive('gallery')}
                     zIndex={getZIndex('gallery')}
@@ -1454,6 +1470,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={galleryPosition}
                     onDragEnd={(pos) => setGalleryPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('gallery')}
                 >
                     <WallpaperApp 
                     wallpapers={wallpapers}
@@ -1469,7 +1486,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="recorder-window"
                     isOpen={isRecorderOpen}
-                    onClose={toggleRecorder}
+                    onClose={() => handleWindowClose('recorder', setIsRecorderOpen)}
                     title="Screen Recorder"
                     isActive={isActive('recorder')}
                     zIndex={getZIndex('recorder')}
@@ -1478,6 +1495,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={recorderPosition}
                     onDragEnd={(pos) => setRecorderPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('recorder')}
                 >
                     <ScreenRecorderApp />
                 </OSWindow>
@@ -1487,7 +1505,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="terminal-window"
                     isOpen={isTerminalOpen}
-                    onClose={toggleTerminal}
+                    onClose={() => handleWindowClose('terminal', setIsTerminalOpen)}
                     title="Terminal"
                     isActive={isActive('terminal')}
                     zIndex={getZIndex('terminal')}
@@ -1496,6 +1514,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={terminalPosition}
                     onDragEnd={(pos) => setTerminalPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('terminal')}
                 >
                     <TerminalApp 
                     onUnlockSecret={() => openWindow('ai', setIsAIOpen)} 
@@ -1514,7 +1533,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="browser-window"
                     isOpen={isBrowserOpen}
-                    onClose={toggleBrowser}
+                    onClose={() => handleWindowClose('browser', setIsBrowserOpen)}
                     title="ZimDex Browser"
                     isActive={isActive('browser')}
                     zIndex={getZIndex('browser')}
@@ -1523,6 +1542,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={browserPosition}
                     onDragEnd={(pos) => setBrowserPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('browser')}
                 >
                     <BrowserApp />
                 </OSWindow>
@@ -1532,7 +1552,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="files-window"
                     isOpen={isFilesOpen}
-                    onClose={toggleFiles}
+                    onClose={() => handleWindowClose('files', setIsFilesOpen)}
                     title="File Explorer"
                     isActive={isActive('files')}
                     zIndex={getZIndex('files')}
@@ -1541,6 +1561,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={filesPosition}
                     onDragEnd={(pos) => setFilesPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('files')}
                 >
                     <FileExplorerApp 
                         onOpenFile={handleOpenFile}
@@ -1554,7 +1575,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="monitor-window"
                     isOpen={isMonitorOpen}
-                    onClose={toggleMonitor}
+                    onClose={() => handleWindowClose('monitor', setIsMonitorOpen)}
                     title="System Monitor"
                     isActive={isActive('monitor')}
                     zIndex={getZIndex('monitor')}
@@ -1563,6 +1584,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={monitorPosition}
                     onDragEnd={(pos) => setMonitorPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('monitor')}
                 >
                     <MonitorApp />
                 </OSWindow>
@@ -1572,7 +1594,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="mail-window"
                     isOpen={isMailOpen}
-                    onClose={toggleMail}
+                    onClose={() => handleWindowClose('mail', setIsMailOpen)}
                     title="Mail"
                     isActive={isActive('mail')}
                     zIndex={getZIndex('mail')}
@@ -1581,6 +1603,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={mailPosition}
                     onDragEnd={(pos) => setMailPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('mail')}
                 >
                     <MailApp />
                 </OSWindow>
@@ -1590,7 +1613,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="calculator-window"
                     isOpen={isCalculatorOpen}
-                    onClose={toggleCalculator}
+                    onClose={() => handleWindowClose('calculator', setIsCalculatorOpen)}
                     title="Calculator"
                     isActive={isActive('calculator')}
                     zIndex={getZIndex('calculator')}
@@ -1601,6 +1624,7 @@ const DesktopContent: React.FC = () => {
                     dragConstraints={constraintsRef}
                     width={320}
                     height={540}
+                    isMinimized={minimizedWindows.includes('calculator')}
                 >
                     <CalculatorApp />
                 </OSWindow>
@@ -1610,7 +1634,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="note-window"
                     isOpen={isNoteOpen}
-                    onClose={toggleNote}
+                    onClose={() => handleWindowClose('note', setIsNoteOpen)}
                     title="My Diary"
                     isActive={isActive('note')}
                     zIndex={getZIndex('note')}
@@ -1619,6 +1643,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={notePosition}
                     onDragEnd={(pos) => setNotePosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('note')}
                 >
                     <NoteApp />
                 </OSWindow>
@@ -1628,7 +1653,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="ai-window"
                     isOpen={isAIOpen}
-                    onClose={toggleLiminalAI}
+                    onClose={() => handleWindowClose('ai', setIsAIOpen)}
                     title="Liminal AI // CLASSIFIED"
                     isActive={isActive('ai')}
                     zIndex={getZIndex('ai')}
@@ -1637,6 +1662,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={aiPosition}
                     onDragEnd={(pos) => setAiPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('ai')}
                 >
                     <LiminalAIApp />
                 </OSWindow>
@@ -1646,7 +1672,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="imageGen-window"
                     isOpen={isImageGenOpen}
-                    onClose={toggleImageGen}
+                    onClose={() => handleWindowClose('imageGen', setIsImageGenOpen)}
                     title="Liminal Visualizer // CLASSIFIED"
                     isActive={isActive('imageGen')}
                     zIndex={getZIndex('imageGen')}
@@ -1655,6 +1681,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={imageGenPosition}
                     onDragEnd={(pos) => setImageGenPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('imageGen')}
                 >
                     <LiminalImageApp />
                 </OSWindow>
@@ -1664,7 +1691,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="videoGen-window"
                     isOpen={isVideoGenOpen}
-                    onClose={toggleVideoGen}
+                    onClose={() => handleWindowClose('videoGen', setIsVideoGenOpen)}
                     title="Liminal Motion Engine // CLASSIFIED"
                     isActive={isActive('videoGen')}
                     zIndex={getZIndex('videoGen')}
@@ -1673,6 +1700,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={videoGenPosition}
                     onDragEnd={(pos) => setVideoGenPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('videoGen')}
                 >
                     <LiminalVideoApp />
                 </OSWindow>
@@ -1682,7 +1710,7 @@ const DesktopContent: React.FC = () => {
                 <OSWindow
                     key="uninstall-window"
                     isOpen={isUninstallOpen}
-                    onClose={toggleUninstall}
+                    onClose={() => handleWindowClose('uninstall', setIsUninstallOpen)}
                     title="Uninstall Tool"
                     isActive={isActive('uninstall')}
                     zIndex={getZIndex('uninstall')}
@@ -1691,6 +1719,7 @@ const DesktopContent: React.FC = () => {
                     initialPosition={uninstallPosition}
                     onDragEnd={(pos) => setUninstallPosition(pos)}
                     dragConstraints={constraintsRef}
+                    isMinimized={minimizedWindows.includes('uninstall')}
                 >
                     <UninstallApp onDeleteFileExplorer={handleCrashExplorer} onClose={toggleUninstall} />
                 </OSWindow>
@@ -1715,6 +1744,7 @@ const DesktopContent: React.FC = () => {
                         initialPosition={fileWin.position}
                         onDragEnd={updatePos}
                         dragConstraints={constraintsRef}
+                        isMinimized={minimizedWindows.includes(winId)}
                     >
                         {['text', 'code'].includes(fileWin.file.type) ? (
                             <TextEditor file={fileWin.file} onSave={fileWin.onSave} />
@@ -1739,13 +1769,15 @@ const DesktopContent: React.FC = () => {
             className="absolute bottom-0 left-0 right-0 z-[200] flex justify-center pb-4 pointer-events-none"
             onContextMenu={(e) => e.stopPropagation()} 
         >
-            <div className={`
+            <motion.div 
+                layout
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className={`
                 flex items-center px-2 py-2
                 h-[68px]
                 border border-white/20 dark:border-white/10
                 shadow-2xl pointer-events-auto
                 rounded-2xl
-                min-w-[600px]
                 ${isTransparencyEnabled ? 'bg-white/60 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl' : 'bg-white dark:bg-[#1c1c1e]'}
             `}>
                 <button 
@@ -1753,9 +1785,10 @@ const DesktopContent: React.FC = () => {
                     onClick={toggleStartMenu}
                     className={`
                     w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 mr-2
-                    ${isStartMenuOpen ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/40' : 'text-gray-800 dark:text-white/90 hover:bg-black/10 dark:hover:bg-white/10 hover:scale-105'}
+                    ${isStartMenuOpen ? 'text-white shadow-lg' : 'text-gray-800 dark:text-white/90 hover:bg-black/10 dark:hover:bg-white/10 hover:scale-105'}
                     ${systemMode === 'ame_virus' ? 'bg-red-900/50 hover:bg-red-800/50' : ''}
                     `}
+                    style={{ backgroundColor: isStartMenuOpen && systemMode !== 'ame_virus' ? accentColor : undefined }}
                 >
                     <ZLogo />
                 </button>
@@ -1767,6 +1800,7 @@ const DesktopContent: React.FC = () => {
                     {allApps.filter(app => app.pinned || app.isOpen).map((app, index, array) => {
                         // Check if previous item was pinned and current is not (to add separator)
                         const isSeparator = !app.pinned && array[index-1]?.pinned;
+                        const isAppActive = isActive(app.id) && !minimizedWindows.includes(app.id);
 
                         return (
                             <motion.div 
@@ -1787,7 +1821,7 @@ const DesktopContent: React.FC = () => {
                                         }}
                                         className={`
                                             w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300
-                                            ${app.isOpen ? 'bg-black/10 dark:bg-white/10 shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-black/10 dark:hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
+                                            ${app.isOpen && !minimizedWindows.includes(app.id) ? 'bg-black/10 dark:bg-white/10 shadow-[0_0_15px_rgba(0,0,0,0.1)] dark:shadow-[0_0_15px_rgba(255,255,255,0.1)]' : 'hover:bg-black/10 dark:hover:bg-white/10 hover:-translate-y-2 hover:scale-110'}
                                         `}
                                     >
                                         {/* Icon Rendering */}
@@ -1801,8 +1835,20 @@ const DesktopContent: React.FC = () => {
                                             </div>
                                         )}
                                     </button>
-                                    {/* Active Dot */}
-                                    <div className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-gray-800 dark:bg-white rounded-full transition-all duration-300 ${app.isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'}`} />
+                                    
+                                    {/* Windows 11 Style Indicator */}
+                                    {app.isOpen && (
+                                        <div 
+                                            className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 h-1 rounded-full transition-all duration-300 
+                                            ${isAppActive
+                                                ? 'w-4 shadow-[0_0_8px_rgba(var(--accent-rgb),0.6)]' 
+                                                : 'w-1 bg-gray-400 dark:bg-gray-500'
+                                            }`}
+                                            style={{
+                                                backgroundColor: isAppActive ? accentColor : undefined
+                                            }}
+                                        />
+                                    )}
                                     
                                     {/* Tooltip */}
                                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap border border-black/5 dark:border-white/10 shadow-sm">
@@ -1814,42 +1860,7 @@ const DesktopContent: React.FC = () => {
                     })}
                     </AnimatePresence>
                 </div>
-
-                <div className="flex-1" />
-
-                <div 
-                    ref={musicDockRef}
-                    onContextMenu={(e) => handleContextMenu(e, 'music')}
-                    onClick={toggleMusicApp}
-                    className="hidden lg:flex items-center gap-3 px-3 py-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors cursor-pointer mr-2"
-                >
-                    <div className={`w-9 h-9 bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden shadow-inner border border-black/5 dark:border-white/5 relative flex items-center justify-center`}>
-                        <motion.div 
-                            className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 dark:from-gray-800 dark:to-black flex items-center justify-center"
-                            animate={{ rotate: isPlaying ? 360 : 0 }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                        >
-                        <div className="w-3 h-3 rounded-full border-[3px] border-white/30 dark:border-white/10" />
-                        <div className="absolute inset-0 rounded-lg border border-black/5 dark:border-white/5" />
-                        </motion.div>
-                    </div>
-                    <div className="flex items-center gap-2 text-gray-700 dark:text-white/80 ml-1" onClick={(e) => e.stopPropagation()}>
-                        <button className="hover:text-black dark:hover:text-white" onClick={prevSong}><SkipBack size={14} fill="currentColor" /></button>
-                        <button className="hover:text-black dark:hover:text-white" onClick={togglePlay}>
-                        {isPlaying ? <div className="w-2.5 h-2.5 bg-current rounded-[1px]" /> : <Play size={14} fill="currentColor" className="ml-1" />}
-                        </button>
-                        <button className="hover:text-black dark:hover:text-white" onClick={nextSong}><SkipForward size={14} fill="currentColor" /></button>
-                    </div>
-                </div>
-
-                <div className="w-[1px] h-8 bg-black/10 dark:bg-white/10 mx-2" />
-
-                <div className="flex items-center gap-4 text-gray-600 dark:text-white/60 px-4">
-                <Wifi size={18} className={!useSystem().isWifiEnabled ? 'opacity-30' : ''} />
-                <Volume2 size={18} />
-                <Battery size={18} />
-                </div>
-            </div>
+            </motion.div>
         </div>
       </motion.div>
       )}

@@ -18,6 +18,7 @@ interface OSWindowProps {
   dragConstraints?: React.RefObject<Element>;
   width?: number;
   height?: number;
+  isMinimized?: boolean;
 }
 
 export const OSWindow: React.FC<OSWindowProps> = ({
@@ -33,7 +34,8 @@ export const OSWindow: React.FC<OSWindowProps> = ({
   onDragEnd,
   dragConstraints,
   width = 950,
-  height = 600
+  height = 600,
+  isMinimized = false
 }) => {
   const { animationSpeed, animationType, isTransparencyEnabled } = useSystem();
   
@@ -56,8 +58,7 @@ export const OSWindow: React.FC<OSWindowProps> = ({
   
   const transformOrigin = useMotionTemplate`${originX}px ${originY}px`;
   
-  const baseDuration = 0.6;
-  const exitDuration = 0.5;
+  const baseDuration = 0.5;
 
   // Animation Curve Logic based on Type
   const getTransition = () => {
@@ -66,7 +67,7 @@ export const OSWindow: React.FC<OSWindowProps> = ({
           case 'snappy': 
               return { duration: duration * 0.6, ease: [0.2, 0.8, 0.2, 1] };
           case 'bouncy': 
-              return { type: "spring", stiffness: 400, damping: 12, mass: 1.2 };
+              return { type: "spring", stiffness: 400, damping: 15, mass: 1 };
           case 'linear': 
               return { duration: duration * 0.5, ease: "linear" };
           case 'default':
@@ -78,25 +79,30 @@ export const OSWindow: React.FC<OSWindowProps> = ({
   const variants: Variants = {
     initial: {
       opacity: 0,
-      scale: 0, // Start from icon size (0)
-      rotateX: 60, // 3D tilt
-      filter: "blur(20px)",
+      scale: 0.6,
+      filter: "blur(15px)",
     },
     animate: {
       opacity: 1,
       scale: 1,
-      rotateX: 0,
+      y: 0,
       filter: "blur(0px)",
       transition: getTransition() as any
     },
-    exit: {
+    minimized: {
       opacity: 0,
       scale: 0,
-      rotateX: 60, // Tilt away when closing
-      filter: "blur(20px)",
+      // Removed fixed y: 400 to let transformOrigin guide it to the dock icon
+      filter: "blur(10px)",
+      transition: { duration: 0.4 / animationSpeed, ease: [0.4, 0, 0.2, 1] }
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.92, // Subtle scale down
+      filter: "blur(5px)",
       transition: {
-        duration: exitDuration / animationSpeed,
-        ease: [0.32, 0, 0.67, 0], // Ease in back
+        duration: 0.2 / animationSpeed,
+        ease: "easeIn", 
       }
     }
   };
@@ -134,9 +140,9 @@ export const OSWindow: React.FC<OSWindowProps> = ({
       <motion.div
         variants={variants}
         initial="initial"
-        animate="animate"
+        animate={isMinimized ? "minimized" : "animate"}
         exit="exit"
-        drag
+        drag={!isMinimized}
         dragListener={false}
         dragControls={dragControls}
         dragMomentum={false}
@@ -154,8 +160,9 @@ export const OSWindow: React.FC<OSWindowProps> = ({
           transformOrigin: transformOrigin,
           transformStyle: "preserve-3d",
           zIndex: zIndex, // Dynamic Z-Index applied here
+          pointerEvents: isMinimized ? 'none' : 'auto', // Disable interaction when minimized
         }}
-        className="pointer-events-auto flex flex-col group"
+        className="flex flex-col group"
         onPointerDown={onFocus}
       >
         {/* The Window Frame */}
